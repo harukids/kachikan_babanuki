@@ -126,8 +126,9 @@ export default function HomePage() {
           価値観を言葉にする
         </h1>
         <p className="text-sm leading-relaxed text-muted">
-          Zoomで話しながら、各自のブラウザでカードを取ります。デッキ{" "}
-          {DECK.length} 枚。通話はアプリに含めません。
+          Zoomなどで話しながら、各自のブラウザでカードを取ります。デッキ{" "}
+          {DECK.length}{" "}
+          枚のカードからあなたの価値観を掘り出してゆく、ゲーム方式のワークです。
         </p>
       </header>
 
