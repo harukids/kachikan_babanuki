@@ -10,16 +10,16 @@ type Placement = {
 
 /** トップ／ロビー用の線画散らし（位置は固定で毎回同じ） */
 const PLACEMENTS: Placement[] = [
-  { id: "heart-01", top: "5%", left: "-2%", size: 200, rotate: -22, opacity: 0.24 },
-  { id: "work-08", top: "3%", right: "-4%", size: 180, rotate: 16, opacity: 0.22 },
-  { id: "growth-10", top: "26%", left: "-5%", size: 160, rotate: 28, opacity: 0.2 },
-  { id: "heart-17", top: "20%", right: "-3%", size: 190, rotate: -12, opacity: 0.23 },
-  { id: "growth-08", top: "46%", left: "1%", size: 140, rotate: -35, opacity: 0.18 },
-  { id: "work-13", top: "50%", right: "0%", size: 170, rotate: 24, opacity: 0.2 },
-  { id: "heart-03", top: "70%", left: "-4%", size: 185, rotate: 14, opacity: 0.22 },
-  { id: "growth-06", top: "68%", right: "-5%", size: 200, rotate: -20, opacity: 0.22 },
-  { id: "work-19", top: "86%", left: "16%", size: 145, rotate: 8, opacity: 0.18 },
-  { id: "heart-13", top: "84%", right: "12%", size: 160, rotate: -28, opacity: 0.2 },
+  { id: "heart-01", top: "5%", left: "-2%", size: 200, rotate: -22, opacity: 0.14 },
+  { id: "work-08", top: "3%", right: "-4%", size: 180, rotate: 16, opacity: 0.13 },
+  { id: "growth-10", top: "26%", left: "-5%", size: 160, rotate: 28, opacity: 0.12 },
+  { id: "heart-17", top: "20%", right: "-3%", size: 190, rotate: -12, opacity: 0.14 },
+  { id: "growth-08", top: "46%", left: "1%", size: 140, rotate: -35, opacity: 0.11 },
+  { id: "work-13", top: "50%", right: "0%", size: 170, rotate: 24, opacity: 0.12 },
+  { id: "heart-03", top: "70%", left: "-4%", size: 185, rotate: 14, opacity: 0.13 },
+  { id: "growth-06", top: "68%", right: "-5%", size: 200, rotate: -20, opacity: 0.13 },
+  { id: "work-19", top: "86%", left: "16%", size: 145, rotate: 8, opacity: 0.11 },
+  { id: "heart-13", top: "84%", right: "12%", size: 160, rotate: -28, opacity: 0.12 },
 ];
 
 type LineArtScatterProps = {
@@ -27,7 +27,7 @@ type LineArtScatterProps = {
 };
 
 export function LineArtScatter({ denser = false }: LineArtScatterProps) {
-  const boost = denser ? 1.12 : 1;
+  const boost = denser ? 1.1 : 1;
   return (
     <div
       aria-hidden
@@ -48,7 +48,7 @@ export function LineArtScatter({ denser = false }: LineArtScatterProps) {
             right: p.right,
             width: p.size,
             height: p.size,
-            opacity: Math.min(0.4, p.opacity * boost),
+            opacity: Math.min(0.22, p.opacity * boost),
             transform: `rotate(${p.rotate}deg)`,
           }}
           draggable={false}
