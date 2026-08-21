@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { DECK, PILLAR_LABEL, getCard } from "@/lib/deck";
 import {
   downloadResultPoster,
   getPosterPreviewClasses,
+  resultPosterDataUrl,
 } from "@/lib/result-poster";
 import type { Pillar } from "@/lib/types";
 
@@ -18,6 +19,8 @@ export default function PosterPreviewPage() {
     "自分らしくいられる関係を大切にしたいから。",
   );
   const [busy, setBusy] = useState(false);
+  const [rendering, setRendering] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const main = getCard(mainId);
@@ -32,13 +35,44 @@ export default function PosterPreviewPage() {
     return map;
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    setRendering(true);
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const url = await resultPosterDataUrl({
+            displayName: name || "ゲスト",
+            mainCardId: mainId,
+            subCardIds: [subA, subB],
+            reason,
+          });
+          if (!cancelled) {
+            setPreviewUrl(url);
+            setError(null);
+          }
+        } catch (e) {
+          if (!cancelled) {
+            setError(e instanceof Error ? e.message : "プレビューに失敗しました");
+          }
+        } finally {
+          if (!cancelled) setRendering(false);
+        }
+      })();
+    }, 200);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [name, mainId, subA, subB, reason]);
+
   return (
-    <main className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-10">
+    <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-6 px-4 py-10">
       <header className="space-y-2">
         <p className="text-xs font-semibold tracking-wide text-mint">プレビュー</p>
         <h1 className="text-2xl font-bold">結果ポスターを見る</h1>
         <p className="text-sm text-muted">
-          メインの柱でグラデーションと線画が変わります。ゲームせずに確認できます。
+          下は実際のPNGと同じ見本です。メインを変えると色・線画・下線が更新されます。
         </p>
       </header>
 
@@ -110,24 +144,22 @@ export default function PosterPreviewPage() {
         />
       </label>
 
-      <div className={`overflow-hidden rounded-2xl border p-5 ${preview.card}`}>
-        <p className={`text-xs font-semibold tracking-wide ${preview.title}`}>
-          わたしの価値観
-          {main ? ` · ${PILLAR_LABEL[main.pillar]}` : ""}
-        </p>
-        <p className="mt-1 text-sm text-muted">{name}</p>
-        <p className={`mt-4 text-4xl font-bold ${preview.main}`}>{main?.label}</p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {[subA, subB].map((id) => (
-            <span
-              key={id}
-              className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-sm font-semibold text-[#f4f7ff]"
-            >
-              {getCard(id)?.label}
-            </span>
-          ))}
-        </div>
-        <p className="mt-4 text-sm leading-relaxed text-[#e8ecff]/90">{reason}</p>
+      <div className="overflow-hidden rounded-2xl border border-line bg-[#0a0c18] p-2">
+        {previewUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={previewUrl}
+            alt="ポスター見本"
+            className="mx-auto w-full max-w-md rounded-xl"
+          />
+        ) : (
+          <div className="flex aspect-[1080/1350] items-center justify-center text-sm text-muted">
+            {rendering ? "見本を描画中…" : "見本を準備中…"}
+          </div>
+        )}
+        {rendering && previewUrl && (
+          <p className="pb-2 text-center text-[11px] text-muted">更新中…</p>
+        )}
       </div>
 
       <button
@@ -153,14 +185,10 @@ export default function PosterPreviewPage() {
           })()
         }
       >
-        {busy ? "作成中…" : "PNGを保存して線画も確認"}
+        {busy ? "作成中…" : "PNGを保存"}
       </button>
 
       {error && <p className="text-sm text-[#f0a0a0]">{error}</p>}
-
-      <p className="text-xs text-muted">
-        心・感情 / 仕事・成果 / 成長・関係 でメインを切り替えて色の違いを見てください。線画はいま柱ごとのフォールバックです。
-      </p>
 
       <Link href="/" className="text-sm text-mint underline">
         トップへ

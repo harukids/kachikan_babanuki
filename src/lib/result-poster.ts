@@ -221,8 +221,10 @@ async function loadLineArt(cardId: string, pillar: Pillar): Promise<HTMLImageEle
   return null;
 }
 
-/** 壁に貼れる縦ポスター（PNG）を生成してダウンロード */
-export async function downloadResultPoster(input: PosterInput): Promise<void> {
+/** ポスターを描画して Canvas を返す */
+export async function renderResultPoster(
+  input: PosterInput,
+): Promise<HTMLCanvasElement> {
   if (typeof document !== "undefined" && document.fonts?.ready) {
     try {
       await document.fonts.ready;
@@ -270,11 +272,11 @@ export async function downloadResultPoster(input: PosterInput): Promise<void> {
   if (input.mainCardId) {
     const art = await loadLineArt(input.mainCardId, pillar);
     if (art) {
-      const artSize = 720;
+      const artSize = 640;
       const ax = (width - artSize) / 2;
-      const ay = 160;
+      const ay = 200;
       ctx.save();
-      ctx.globalAlpha = 0.22;
+      ctx.globalAlpha = 0.2;
       ctx.drawImage(art, ax, ay, artSize, artSize);
       ctx.restore();
     }
@@ -295,36 +297,55 @@ export async function downloadResultPoster(input: PosterInput): Promise<void> {
   roundRect(ctx, 78, 78, width - 156, height - 156, 34);
   ctx.stroke();
 
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+
   ctx.fillStyle = theme.title;
   ctx.font = "600 34px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
-  ctx.textAlign = "center";
   ctx.fillText("わたしの価値観", width / 2, 170);
 
   ctx.fillStyle = theme.name;
   ctx.font = "500 28px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
   ctx.fillText(input.displayName, width / 2, 220);
 
-  ctx.fillStyle = theme.mainLabel;
-  ctx.font = "700 120px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
+  // メイン語 — 下線は文字サイズに追従
   const mainLabel = main?.label ?? "—";
-  fitCenterText(ctx, mainLabel, width / 2, 420, width - 200, 120);
+  const mainCy = 400;
+  ctx.fillStyle = theme.mainLabel;
+  const { size: mainSize, width: mainTextW } = fitCenterText(
+    ctx,
+    mainLabel,
+    width / 2,
+    mainCy,
+    width - 220,
+    120,
+  );
 
-  const lineGrad = ctx.createLinearGradient(width / 2 - 100, 0, width / 2 + 100, 0);
+  const underlineY = mainCy + mainSize * 0.52 + 18;
+  const halfLine = Math.max(64, Math.min(mainTextW * 0.42, 200));
+  const lineGrad = ctx.createLinearGradient(
+    width / 2 - halfLine,
+    0,
+    width / 2 + halfLine,
+    0,
+  );
   theme.accentLine.forEach((c, i) => {
     lineGrad.addColorStop(i / Math.max(theme.accentLine.length - 1, 1), c);
   });
   ctx.strokeStyle = lineGrad;
-  ctx.lineWidth = 4;
+  ctx.lineWidth = 6;
+  ctx.lineCap = "round";
   ctx.beginPath();
-  ctx.moveTo(width / 2 - 90, 475);
-  ctx.lineTo(width / 2 + 90, 475);
+  ctx.moveTo(width / 2 - halfLine, underlineY);
+  ctx.lineTo(width / 2 + halfLine, underlineY);
   ctx.stroke();
 
+  ctx.textBaseline = "alphabetic";
   ctx.fillStyle = theme.mainCaption;
-  ctx.font = "600 24px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
-  ctx.fillText("MAIN VALUE", width / 2, 525);
+  ctx.font = "600 22px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
+  ctx.fillText("MAIN VALUE", width / 2, underlineY + 42);
 
-  const subY = 620;
+  const subY = Math.max(600, underlineY + 90);
   const boxW = 360;
   const gap = 40;
   const startX = (width - (boxW * 2 + gap)) / 2;
@@ -344,30 +365,32 @@ export async function downloadResultPoster(input: PosterInput): Promise<void> {
 
     ctx.fillStyle = "#dce6ff";
     ctx.font = "600 22px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
+    ctx.textBaseline = "alphabetic";
     ctx.fillText("SUB", x + boxW / 2, subY + 42);
 
     ctx.fillStyle = "#ffffff";
-    ctx.font = "700 48px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
-    fitCenterText(ctx, sub?.label ?? "—", x + boxW / 2, subY + 100, boxW - 40, 48);
+    fitCenterText(ctx, sub?.label ?? "—", x + boxW / 2, subY + 95, boxW - 40, 48);
+    ctx.textBaseline = "alphabetic";
   });
 
+  const reasonTop = subY + 180;
   const reason = (input.reason ?? "").trim() || "（理由未入力）";
   ctx.fillStyle = "rgba(10, 12, 28, 0.55)";
-  roundRect(ctx, 120, 820, width - 240, 280, 28);
+  roundRect(ctx, 120, reasonTop, width - 240, 280, 28);
   ctx.fill();
   ctx.strokeStyle = theme.reasonStroke;
   ctx.lineWidth = 2;
-  roundRect(ctx, 120, 820, width - 240, 280, 28);
+  roundRect(ctx, 120, reasonTop, width - 240, 280, 28);
   ctx.stroke();
 
   ctx.fillStyle = theme.reasonTitle;
   ctx.font = "700 24px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
-  ctx.fillText("なぜ、これを大切にするのか", width / 2, 870);
+  ctx.fillText("なぜ、これを大切にするのか", width / 2, reasonTop + 50);
 
   ctx.fillStyle = "#eef2ff";
   ctx.font = "500 32px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
   const lines = wrapText(ctx, reason, width - 320);
-  const startReasonY = 930;
+  const startReasonY = reasonTop + 110;
   lines.slice(0, 5).forEach((line, i) => {
     ctx.fillText(line, width / 2, startReasonY + i * 44);
   });
@@ -376,6 +399,20 @@ export async function downloadResultPoster(input: PosterInput): Promise<void> {
   ctx.font = "500 22px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
   const date = new Date().toLocaleDateString("ja-JP");
   ctx.fillText(`価値観ババ抜き ／ ${date}`, width / 2, 1280);
+
+  return canvas;
+}
+
+export async function resultPosterDataUrl(input: PosterInput): Promise<string> {
+  const canvas = await renderResultPoster(input);
+  return canvas.toDataURL("image/png");
+}
+
+/** 壁に貼れる縦ポスター（PNG）を生成してダウンロード */
+export async function downloadResultPoster(input: PosterInput): Promise<void> {
+  const canvas = await renderResultPoster(input);
+  const main = input.mainCardId ? getCard(input.mainCardId) : null;
+  const mainLabel = main?.label ?? "価値観";
 
   await new Promise<void>((resolve, reject) => {
     canvas.toBlob((blob) => {
@@ -433,7 +470,7 @@ function fitCenterText(
   cy: number,
   maxWidth: number,
   baseSize: number,
-) {
+): { size: number; width: number } {
   let size = baseSize;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
@@ -442,5 +479,8 @@ function fitCenterText(
     if (ctx.measureText(text).width <= maxWidth) break;
     size -= 4;
   }
+  ctx.font = `700 ${size}px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif`;
+  const measured = ctx.measureText(text).width;
   ctx.fillText(text, cx, cy);
+  return { size, width: measured };
 }
