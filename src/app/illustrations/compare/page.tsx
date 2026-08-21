@@ -3,19 +3,30 @@
 import Link from "next/link";
 import { DECK, PILLAR_LABEL } from "@/lib/deck";
 
+const VERSIONS = [
+  { key: "v1", label: "v1 シンボル", src: (id: string) => `/illustrations/${id}.svg` },
+  { key: "v2", label: "v2 一筆", src: (id: string) => `/illustrations/v2/${id}.svg` },
+  { key: "v3", label: "v3 装飾", src: (id: string) => `/illustrations/v3/${id}.svg` },
+] as const;
+
 export default function IllustrationsComparePage() {
   return (
-    <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-10">
+    <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">
       <header className="mb-8 space-y-2">
         <p className="text-xs font-semibold tracking-wide text-mint">プレビュー</p>
-        <h1 className="text-2xl font-bold">v1 と v2 の見比べ</h1>
-        <p className="text-sm text-muted">左がシンボル型（v1）、右が一筆書き風（v2）です。</p>
-        <div className="flex gap-3 text-sm">
+        <h1 className="text-2xl font-bold">v1 / v2 / v3 の見比べ</h1>
+        <p className="text-sm text-muted">
+          左からシンボル・一筆書き風・シンボル＋装飾です。
+        </p>
+        <div className="flex flex-wrap gap-3 text-sm">
           <Link href="/illustrations" className="text-mint underline">
-            v1一覧
+            v1
           </Link>
           <Link href="/illustrations/v2" className="text-mint underline">
-            v2一覧
+            v2
+          </Link>
+          <Link href="/illustrations/v3" className="text-mint underline">
+            v3
           </Link>
         </div>
       </header>
@@ -32,25 +43,18 @@ export default function IllustrationsComparePage() {
                 {PILLAR_LABEL[card.pillar]}
               </span>
             </p>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl bg-[#12122a] p-3">
-                <p className="mb-1 text-center text-[10px] text-muted">v1</p>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={`/illustrations/${card.id}.svg`}
-                  alt={`${card.label} v1`}
-                  className="mx-auto aspect-square w-full max-w-[160px] object-contain"
-                />
-              </div>
-              <div className="rounded-xl bg-[#12122a] p-3">
-                <p className="mb-1 text-center text-[10px] text-muted">v2</p>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={`/illustrations/v2/${card.id}.svg`}
-                  alt={`${card.label} v2`}
-                  className="mx-auto aspect-square w-full max-w-[160px] object-contain"
-                />
-              </div>
+            <div className="grid grid-cols-3 gap-2">
+              {VERSIONS.map((v) => (
+                <div key={v.key} className="rounded-xl bg-[#12122a] p-2">
+                  <p className="mb-1 text-center text-[10px] text-muted">{v.label}</p>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={v.src(card.id)}
+                    alt={`${card.label} ${v.key}`}
+                    className="mx-auto aspect-square w-full max-w-[140px] object-contain"
+                  />
+                </div>
+              ))}
             </div>
           </article>
         ))}

@@ -6,24 +6,24 @@ import type { Pillar } from "@/lib/types";
 
 const PILLARS: Pillar[] = ["heart", "work", "growth"];
 
-export default function IllustrationsGalleryPage() {
+export default function IllustrationsV3Page() {
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">
       <header className="mb-8 space-y-2">
-        <p className="text-xs font-semibold tracking-wide text-mint">プレビュー</p>
-        <h1 className="text-2xl font-bold">線画イラスト 60枚</h1>
+        <p className="text-xs font-semibold tracking-wide text-mint">プレビュー · v3</p>
+        <h1 className="text-2xl font-bold">シンボル＋デザイン装飾</h1>
         <p className="text-sm text-muted">
-          単語ごとの白線アイコンです。ポスターではメインの裏に薄く重なります。気になるものがあれば教えてください。
+          v1の分かりやすさに、柱見本のような星・点・副線を足した試作です（例: 「愛」はハート＋きらめき）。
         </p>
         <div className="flex flex-wrap gap-3 text-sm">
-          <Link href="/illustrations/v2" className="text-mint underline">
-            v2（一筆書き風）
+          <Link href="/illustrations" className="text-mint underline">
+            v1
           </Link>
-          <Link href="/illustrations/v3" className="text-mint underline">
-            v3（シンボル＋装飾）
+          <Link href="/illustrations/v2" className="text-mint underline">
+            v2
           </Link>
           <Link href="/illustrations/compare" className="text-mint underline">
-            見比べる
+            見比べ（v1/v2/v3）
           </Link>
         </div>
       </header>
@@ -42,7 +42,7 @@ export default function IllustrationsGalleryPage() {
                 <div className="flex aspect-square items-center justify-center rounded-xl bg-gradient-to-br from-[#1a2040] to-[#0c1020] p-4">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={`/illustrations/${card.id}.svg`}
+                    src={`/illustrations/v3/${card.id}.svg`}
                     alt={card.label}
                     className="h-full w-full object-contain opacity-95"
                   />
@@ -50,21 +50,11 @@ export default function IllustrationsGalleryPage() {
                 <figcaption className="mt-2 text-center text-sm font-semibold">
                   {card.label}
                 </figcaption>
-                <p className="text-center text-[10px] text-muted">{card.id}</p>
               </figure>
             ))}
           </div>
         </section>
       ))}
-
-      <div className="flex flex-wrap gap-4 text-sm">
-        <Link href="/poster-preview" className="text-mint underline">
-          ポスタープレビューへ
-        </Link>
-        <Link href="/" className="text-mint underline">
-          トップへ
-        </Link>
-      </div>
     </main>
   );
 }
