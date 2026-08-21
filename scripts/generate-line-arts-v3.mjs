@@ -26,13 +26,15 @@ function l(x1, y1, x2, y2, w = 6) {
 }
 function spark(cx, cy, s = 16) {
   const h = s * 0.35;
-  return p(
-    `M${cx} ${cy - s} L${cx + h} ${cy - h} L${cx + s} ${cy} L${cx + h} ${cy + h} L${cx} ${cy + s} L${cx - h} ${cy + h} L${cx - s} ${cy} L${cx - h} ${cy - h} Z`,
-    5,
-  );
+  return `<path d="M${cx} ${cy - s} L${cx + h} ${cy - h} L${cx + s} ${cy} L${cx + h} ${cy + h} L${cx} ${cy + s} L${cx - h} ${cy + h} L${cx - s} ${cy} L${cx - h} ${cy - h} Z" stroke="#fff" fill="#fff" stroke-width="2" stroke-linejoin="round"/>`;
 }
 function dots(...pairs) {
-  return pairs.map(([x, y, r = 6]) => c(x, y, r, 4)).join("");
+  return pairs
+    .map(
+      ([x, y, r = 6]) =>
+        `<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" stroke="none"/>`,
+    )
+    .join("");
 }
 
 const arts = {
@@ -450,16 +452,16 @@ const arts = {
         dots([100, 130, 5], [400, 360, 5]),
       ].join(""),
     ),
-  "work-17": // 継続 — v2の一筆循環 + v3装飾（大きめの星・点）
+  "work-17": // 継続 — v2一筆 + はっきり見える塗りつぶし星・点
     wrap(
       [
         p(
           "M190 210 C210 145 285 125 340 175 C385 220 375 305 310 345 C255 375 180 350 160 285 C170 320 215 345 270 335 C325 325 350 270 335 225 C315 175 265 165 225 195 C205 215 195 245 205 275",
           11,
         ),
-        spark(400, 120, 22),
-        spark(105, 160, 14),
-        dots([95, 340, 9], [420, 300, 8], [380, 200, 6]),
+        spark(405, 115, 26),
+        spark(100, 155, 18),
+        dots([90, 350, 11], [425, 310, 10], [385, 205, 8], [130, 400, 7]),
       ].join(""),
     ),
   "work-18": // 公平 — 天秤＋飾り

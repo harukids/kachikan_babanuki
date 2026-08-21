@@ -5,6 +5,7 @@ import { DECK, PILLAR_LABEL } from "@/lib/deck";
 import type { Pillar } from "@/lib/types";
 
 const PILLARS: Pillar[] = ["heart", "work", "growth"];
+const CACHE = "20260822c";
 
 export default function IllustrationsV3Page() {
   return (
@@ -13,7 +14,7 @@ export default function IllustrationsV3Page() {
         <p className="text-xs font-semibold tracking-wide text-mint">プレビュー · v3</p>
         <h1 className="text-2xl font-bold">シンボル＋デザイン装飾</h1>
         <p className="text-sm text-muted">
-          採用セットです（ポスターもこちら）。「継続」だけ v2 の一筆循環に差し替えています。
+          採用セットです（ポスターもこちら）。「継続」は一筆循環＋星・点の装飾です。
         </p>
         <div className="flex flex-wrap gap-3 text-sm">
           <Link href="/illustrations" className="text-mint underline">
@@ -42,7 +43,7 @@ export default function IllustrationsV3Page() {
                 <div className="flex aspect-square items-center justify-center rounded-xl bg-gradient-to-br from-[#1a2040] to-[#0c1020] p-4">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={`/illustrations/v3/${card.id}.svg`}
+                    src={`/illustrations/v3/${card.id}.svg?v=${CACHE}`}
                     alt={card.label}
                     className="h-full w-full object-contain opacity-95"
                   />
