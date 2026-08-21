@@ -223,9 +223,6 @@ export default function RoomPage() {
                     ? "結果"
                     : room.phase}
         </h1>
-        <p className="text-sm text-muted">
-          Zoomは別窓。ここはカード専用。
-        </p>
       </header>
 
       {room.phase === "LOBBY" && (
@@ -316,7 +313,7 @@ export default function RoomPage() {
               type="button"
               disabled={busy || players.length < MIN_PLAYERS}
               onClick={() => void startGame()}
-              className="rounded-xl bg-accent px-4 py-3 text-sm font-bold text-[#1c2421] disabled:opacity-40"
+              className="rounded-xl bg-gradient-to-r from-[#6ea8ff] via-[#ff8ec8] to-[#ffb086] px-4 py-3 text-sm font-bold text-[#12122a] disabled:opacity-40"
             >
               ゲームを開始する
             </button>

@@ -166,14 +166,14 @@ export function PlayingView({ room, players, me, onChanged }: Props) {
                   key={`confirm-${id}-${index}`}
                   className={`relative flex h-[100px] w-[76px] flex-col items-center justify-center rounded-xl border-2 text-center ${
                     isPending
-                      ? "card-targeted border-accent bg-[#fff4ef]"
+                      ? "card-targeted border-accent bg-[#2a1f3d]"
                       : denied
-                        ? "border-line bg-[#eef2f0] opacity-40"
-                        : "border-line bg-white"
+                        ? "border-line bg-[#151a2e] opacity-40"
+                        : "border-line bg-[#1a2038]"
                   }`}
                 >
                   {isPending && (
-                    <span className="card-targeted-label absolute -top-2 rounded-full bg-accent px-2 py-0.5 text-[10px] text-[#16382f]">
+                    <span className="card-targeted-label absolute -top-2 rounded-full bg-accent px-2 py-0.5 text-[10px] text-[#1a1230]">
                       これ
                     </span>
                   )}
@@ -293,12 +293,12 @@ export function PlayingView({ room, players, me, onChanged }: Props) {
                     });
                   })
                 }
-                className={`relative min-w-[88px] rounded-xl border bg-white px-3 py-4 text-center shadow-sm disabled:opacity-60 ${
+                className={`relative min-w-[88px] rounded-xl border bg-[#1a2038]/90 px-3 py-4 text-center shadow-sm disabled:opacity-60 ${
                   isTargeted ? "card-targeted border-accent" : "border-line"
                 }`}
               >
                 {isTargeted && (
-                  <span className="card-targeted-label absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-accent px-2 py-0.5 text-[10px] text-[#16382f]">
+                  <span className="card-targeted-label absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-accent px-2 py-0.5 text-[10px] text-[#1a1230]">
                     選択中
                   </span>
                 )}
@@ -337,7 +337,7 @@ export function PlayingView({ room, players, me, onChanged }: Props) {
                 ここで選ぶ
               </span>
             </div>
-            <div className="flex flex-wrap gap-2 rounded-xl border border-accent/40 bg-[#f7fffb] p-3">
+            <div className="flex flex-wrap gap-2 rounded-xl border border-accent/30 bg-[#14182e]/70 p-3">
               {victim.hand.map((id, index) => {
                 const denied = (room.denied_card_ids ?? []).includes(id);
                 return (
@@ -360,8 +360,8 @@ export function PlayingView({ room, players, me, onChanged }: Props) {
                     }
                     className={`h-[72px] w-[56px] rounded-lg border text-xs transition ${
                       denied
-                        ? "cursor-not-allowed border-line bg-[#e8eeeb] text-[#8aa099] opacity-50"
-                        : "border-accent/40 bg-[#dff5ec] text-mint hover:border-accent hover:bg-[#c8f0e0]"
+                        ? "cursor-not-allowed border-line bg-[#1a1f33] text-[#6b7390] opacity-50"
+                        : "border-[#b794ff]/50 bg-gradient-to-b from-[#2a2550] to-[#1c2240] text-[#c9d7ff] hover:border-[#ff9ad5] hover:from-[#3a2a60]"
                     }`}
                   >
                     {denied ? "×" : "?"}
@@ -400,13 +400,11 @@ export function PlayingView({ room, players, me, onChanged }: Props) {
           value={fieldQuery}
           onChange={(e) => setFieldQuery(e.target.value)}
         />
-        <div
-          className={`grid max-h-56 grid-cols-3 gap-2 overflow-auto rounded-xl p-2 sm:grid-cols-4 ${
+            <div className={`grid max-h-56 grid-cols-3 gap-2 overflow-auto rounded-xl p-2 sm:grid-cols-4 ${
             room.sub_state === "GAIN" && victimId === me.id
-              ? "border border-accent/40 bg-background/50"
+              ? "border border-accent/40 bg-[#14182e]/70"
               : ""
-          }`}
-        >
+          }`}>
           {fieldCards.map((card) => {
             const canGain = room.sub_state === "GAIN" && victimId === me.id;
             const selected = selectedFieldId === card.id;
@@ -420,8 +418,8 @@ export function PlayingView({ room, players, me, onChanged }: Props) {
                   selected
                     ? "card-targeted border-accent text-accent"
                     : canGain
-                      ? "border-accent/40 bg-background hover:border-accent"
-                      : "border-line bg-background"
+                      ? "border-[#b794ff]/40 bg-[#1a2038] hover:border-accent"
+                      : "border-line bg-[#1a2038]/80"
                 }`}
               >
                 {card.label}
@@ -433,7 +431,7 @@ export function PlayingView({ room, players, me, onChanged }: Props) {
           <button
             type="button"
             disabled={busy || !selectedFieldId}
-            className="rounded-xl bg-accent px-4 py-2 text-sm font-bold text-[#16382f] disabled:opacity-40"
+            className="rounded-xl bg-gradient-to-r from-[#6ea8ff] via-[#ff8ec8] to-[#ffb086] px-4 py-2 text-sm font-bold text-[#12122a] disabled:opacity-40"
             onClick={() =>
               void run(async () => {
                 if (!selectedFieldId) return;

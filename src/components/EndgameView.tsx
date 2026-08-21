@@ -127,7 +127,7 @@ export function EndgameView({ room, players, me, onChanged }: Props) {
               <button
                 type="button"
                 disabled={busy || !mainId || subIds.length !== 2}
-                className="rounded-xl bg-accent px-4 py-3 text-sm font-bold text-[#1c2421] disabled:opacity-40"
+                className="rounded-xl bg-gradient-to-r from-[#6ea8ff] via-[#ff8ec8] to-[#ffb086] px-4 py-3 text-sm font-bold text-[#12122a] disabled:opacity-40"
                 onClick={() =>
                   void run(async () => {
                     if (!mainId || subIds.length !== 2) return;
@@ -181,7 +181,7 @@ export function EndgameView({ room, players, me, onChanged }: Props) {
                 <button
                   type="button"
                   disabled={busy || !reason.trim()}
-                  className="rounded-xl bg-accent px-4 py-3 text-sm font-bold text-[#1c2421] disabled:opacity-40"
+                  className="rounded-xl bg-gradient-to-r from-[#6ea8ff] via-[#ff8ec8] to-[#ffb086] px-4 py-3 text-sm font-bold text-[#12122a] disabled:opacity-40"
                   onClick={() =>
                     void run(async () => {
                       const supabase = createBrowserClient();
@@ -213,9 +213,6 @@ export function EndgameView({ room, players, me, onChanged }: Props) {
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <h2 className="text-sm font-semibold text-mint">結果</h2>
-              <p className="mt-1 text-xs text-muted">
-                自分の分は、壁に貼れるポスター画像としても保存できます。
-              </p>
             </div>
             <button
               type="button"
@@ -235,31 +232,31 @@ export function EndgameView({ room, players, me, onChanged }: Props) {
           </div>
 
           {/* 自分のポスタープレビュー風 */}
-          <div className="overflow-hidden rounded-2xl border border-mint/30 bg-gradient-to-br from-[#e8fbf4] via-white to-[#e6f3ff] p-5 shadow-sm">
-            <p className="text-xs font-semibold tracking-wide text-mint">
+          <div className="overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-[#1a2a5a]/80 via-[#3a1f55]/75 to-[#4a2038]/8 p-5 shadow-[0_0_40px_rgba(183,148,255,0.2)] backdrop-blur-md">
+            <p className="text-xs font-semibold tracking-wide text-[#c9d7ff]">
               わたしの価値観
             </p>
             <p className="mt-1 text-sm text-muted">{me.display_name}</p>
-            <p className="mt-4 text-4xl font-bold text-foreground">
+            <p className="mt-4 bg-gradient-to-r from-[#6ea8ff] via-[#ff8ec8] to-[#ffb086] bg-clip-text text-4xl font-bold text-transparent">
               {getCard(me.main_card_id ?? "")?.label ?? "—"}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               {(me.sub_card_ids ?? []).map((id) => (
                 <span
                   key={id}
-                  className="rounded-full bg-white/80 px-3 py-1 text-sm font-semibold text-mint shadow-sm"
+                  className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-sm font-semibold text-[#f4f7ff] shadow-sm"
                 >
                   {getCard(id)?.label}
                 </span>
               ))}
             </div>
-            <p className="mt-4 text-sm leading-relaxed text-foreground/80">
+            <p className="mt-4 text-sm leading-relaxed text-[#e8ecff]/90">
               {me.reason || "（理由なし）"}
             </p>
             <button
               type="button"
               disabled={savingPosterId === me.id}
-              className="mt-5 rounded-xl bg-accent px-4 py-3 text-sm font-bold text-[#16382f] disabled:opacity-50"
+              className="mt-5 rounded-xl bg-gradient-to-r from-[#6ea8ff] via-[#ff8ec8] to-[#ffb086] px-4 py-3 text-sm font-bold text-[#12122a] disabled:opacity-50"
               onClick={() =>
                 void (async () => {
                   setSavingPosterId(me.id);
@@ -283,7 +280,7 @@ export function EndgameView({ room, players, me, onChanged }: Props) {
             >
               {savingPosterId === me.id
                 ? "作成中…"
-                : "自分のポスターを画像で保存"}
+                : "自分の結果を画像で保存"}
             </button>
           </div>
 

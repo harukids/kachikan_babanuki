@@ -46,36 +46,47 @@ export async function downloadResultPoster(input: PosterInput): Promise<void> {
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("画像を作れませんでした");
 
-  // 背景グラデーション（爽やかなミント→スカイ）
-  const bg = ctx.createLinearGradient(0, 0, width, height);
-  bg.addColorStop(0, "#e8fbf4");
-  bg.addColorStop(0.45, "#f7fffb");
-  bg.addColorStop(1, "#e6f3ff");
-  ctx.fillStyle = bg;
+  // 夜空ベース
+  const night = ctx.createLinearGradient(0, 0, width, height);
+  night.addColorStop(0, "#0b1020");
+  night.addColorStop(0.35, "#161b3d");
+  night.addColorStop(0.7, "#241433");
+  night.addColorStop(1, "#101528");
+  ctx.fillStyle = night;
   ctx.fillRect(0, 0, width, height);
 
-  // やわらかい光の円
-  const glow1 = ctx.createRadialGradient(200, 180, 20, 200, 180, 420);
-  glow1.addColorStop(0, "rgba(90, 210, 170, 0.35)");
-  glow1.addColorStop(1, "rgba(90, 210, 170, 0)");
-  ctx.fillStyle = glow1;
+  // オーロラ（青→紫→ピンク→オレンジ→黄）
+  drawGlow(ctx, 160, 220, 520, "rgba(110,168,255,0.55)");
+  drawGlow(ctx, 860, 180, 480, "rgba(183,148,255,0.5)");
+  drawGlow(ctx, 780, 780, 520, "rgba(255,142,200,0.45)");
+  drawGlow(ctx, 220, 980, 460, "rgba(255,176,134,0.38)");
+  drawGlow(ctx, 540, 560, 360, "rgba(255,226,138,0.22)");
+
+  // 斜めのオーロラ帯
+  const band = ctx.createLinearGradient(0, 200, width, 1100);
+  band.addColorStop(0, "rgba(110,168,255,0.0)");
+  band.addColorStop(0.2, "rgba(110,168,255,0.18)");
+  band.addColorStop(0.4, "rgba(183,148,255,0.2)");
+  band.addColorStop(0.6, "rgba(255,142,200,0.18)");
+  band.addColorStop(0.8, "rgba(255,176,134,0.14)");
+  band.addColorStop(1, "rgba(255,226,138,0.0)");
+  ctx.fillStyle = band;
   ctx.fillRect(0, 0, width, height);
 
-  const glow2 = ctx.createRadialGradient(900, 1100, 20, 900, 1100, 480);
-  glow2.addColorStop(0, "rgba(255, 170, 120, 0.28)");
-  glow2.addColorStop(1, "rgba(255, 170, 120, 0)");
-  ctx.fillStyle = glow2;
-  ctx.fillRect(0, 0, width, height);
-
-  // 外枠
-  ctx.strokeStyle = "rgba(45, 140, 120, 0.25)";
-  ctx.lineWidth = 8;
-  roundRect(ctx, 48, 48, width - 96, height - 96, 40);
+  // 外枠（ネオン）
+  const frame = ctx.createLinearGradient(80, 80, width - 80, height - 80);
+  frame.addColorStop(0, "rgba(110,168,255,0.85)");
+  frame.addColorStop(0.35, "rgba(183,148,255,0.85)");
+  frame.addColorStop(0.65, "rgba(255,142,200,0.85)");
+  frame.addColorStop(1, "rgba(255,176,134,0.85)");
+  ctx.strokeStyle = frame;
+  ctx.lineWidth = 6;
+  roundRect(ctx, 56, 56, width - 112, height - 112, 42);
   ctx.stroke();
 
-  ctx.strokeStyle = "rgba(255, 140, 100, 0.35)";
+  ctx.strokeStyle = "rgba(255,255,255,0.18)";
   ctx.lineWidth = 2;
-  roundRect(ctx, 72, 72, width - 144, height - 144, 32);
+  roundRect(ctx, 78, 78, width - 156, height - 156, 34);
   ctx.stroke();
 
   const main = input.mainCardId ? getCard(input.mainCardId) : null;
@@ -83,69 +94,83 @@ export async function downloadResultPoster(input: PosterInput): Promise<void> {
     .map((id) => getCard(id))
     .filter(Boolean);
 
-  // タイトル
-  ctx.fillStyle = "#2a8f78";
-  ctx.font = "600 36px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
+  ctx.fillStyle = "#c9d7ff";
+  ctx.font = "600 34px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText("わたしの価値観", width / 2, 160);
+  ctx.fillText("わたしの価値観", width / 2, 170);
 
-  ctx.fillStyle = "#5a7a72";
+  ctx.fillStyle = "#f4f7ff";
   ctx.font = "500 28px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
-  ctx.fillText(input.displayName, width / 2, 210);
+  ctx.fillText(input.displayName, width / 2, 220);
 
-  // メイン大表示
-  ctx.fillStyle = "#16382f";
+  // メイン
+  ctx.fillStyle = "#ffffff";
   ctx.font = "700 120px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
   const mainLabel = main?.label ?? "—";
   fitCenterText(ctx, mainLabel, width / 2, 420, width - 200, 120);
 
-  // メイン下のアクセントライン
-  ctx.strokeStyle = "#ff8f6b";
+  const lineGrad = ctx.createLinearGradient(width / 2 - 100, 0, width / 2 + 100, 0);
+  lineGrad.addColorStop(0, "#6ea8ff");
+  lineGrad.addColorStop(0.5, "#ff8ec8");
+  lineGrad.addColorStop(1, "#ffb086");
+  ctx.strokeStyle = lineGrad;
   ctx.lineWidth = 4;
   ctx.beginPath();
-  ctx.moveTo(width / 2 - 80, 470);
-  ctx.lineTo(width / 2 + 80, 470);
+  ctx.moveTo(width / 2 - 90, 475);
+  ctx.lineTo(width / 2 + 90, 475);
   ctx.stroke();
 
-  ctx.fillStyle = "#2a8f78";
-  ctx.font = "600 26px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
-  ctx.fillText("MAIN VALUE", width / 2, 520);
+  ctx.fillStyle = "#ff9ad5";
+  ctx.font = "600 24px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
+  ctx.fillText("MAIN VALUE", width / 2, 525);
 
-  // サブ2つ
+  // サブ
   const subY = 620;
   const boxW = 360;
   const gap = 40;
   const startX = (width - (boxW * 2 + gap)) / 2;
+  const subColors = [
+    ["rgba(110,168,255,0.22)", "rgba(110,168,255,0.7)"],
+    ["rgba(255,142,200,0.22)", "rgba(255,142,200,0.7)"],
+  ] as const;
+
   subs.slice(0, 2).forEach((sub, i) => {
     const x = startX + i * (boxW + gap);
-    ctx.fillStyle = "rgba(255,255,255,0.85)";
+    ctx.fillStyle = "rgba(12, 14, 28, 0.45)";
     roundRect(ctx, x, subY, boxW, 140, 24);
     ctx.fill();
-    ctx.strokeStyle = "rgba(42, 143, 120, 0.3)";
+    ctx.fillStyle = subColors[i][0];
+    roundRect(ctx, x, subY, boxW, 140, 24);
+    ctx.fill();
+    ctx.strokeStyle = subColors[i][1];
     ctx.lineWidth = 2;
     roundRect(ctx, x, subY, boxW, 140, 24);
     ctx.stroke();
 
-    ctx.fillStyle = "#2a8f78";
+    ctx.fillStyle = "#dce6ff";
     ctx.font = "600 22px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
     ctx.fillText("SUB", x + boxW / 2, subY + 42);
 
-    ctx.fillStyle = "#16382f";
+    ctx.fillStyle = "#ffffff";
     ctx.font = "700 48px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
     fitCenterText(ctx, sub?.label ?? "—", x + boxW / 2, subY + 100, boxW - 40, 48);
   });
 
-  // 理由
+  // 理由カード
   const reason = (input.reason ?? "").trim() || "（理由未入力）";
-  ctx.fillStyle = "rgba(255,255,255,0.9)";
+  ctx.fillStyle = "rgba(10, 12, 28, 0.55)";
   roundRect(ctx, 120, 820, width - 240, 280, 28);
   ctx.fill();
+  ctx.strokeStyle = "rgba(255,226,138,0.35)";
+  ctx.lineWidth = 2;
+  roundRect(ctx, 120, 820, width - 240, 280, 28);
+  ctx.stroke();
 
-  ctx.fillStyle = "#ff8f6b";
+  ctx.fillStyle = "#ffe28a";
   ctx.font = "700 24px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
   ctx.fillText("なぜ、これを大切にするのか", width / 2, 870);
 
-  ctx.fillStyle = "#2d4a43";
+  ctx.fillStyle = "#eef2ff";
   ctx.font = "500 32px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
   const lines = wrapText(ctx, reason, width - 320);
   const startReasonY = 930;
@@ -153,8 +178,7 @@ export async function downloadResultPoster(input: PosterInput): Promise<void> {
     ctx.fillText(line, width / 2, startReasonY + i * 44);
   });
 
-  // フッタ
-  ctx.fillStyle = "#7a9a92";
+  ctx.fillStyle = "#9aa8c7";
   ctx.font = "500 22px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
   const date = new Date().toLocaleDateString("ja-JP");
   ctx.fillText(`価値観ババ抜き ／ ${date}`, width / 2, 1280);
@@ -174,6 +198,20 @@ export async function downloadResultPoster(input: PosterInput): Promise<void> {
       resolve();
     }, "image/png");
   });
+}
+
+function drawGlow(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  radius: number,
+  color: string,
+) {
+  const g = ctx.createRadialGradient(x, y, 10, x, y, radius);
+  g.addColorStop(0, color);
+  g.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 }
 
 function roundRect(

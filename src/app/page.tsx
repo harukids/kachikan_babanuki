@@ -162,7 +162,7 @@ export default function HomePage() {
           type="button"
           disabled={busy}
           onClick={createRoom}
-          className="w-full rounded-xl bg-accent px-4 py-3 text-sm font-bold text-[#1c2421] disabled:opacity-50"
+          className="w-full rounded-xl bg-gradient-to-r from-[#6ea8ff] via-[#b794ff] to-[#ff8ec8] px-4 py-3 text-sm font-bold text-[#12122a] disabled:opacity-50"
         >
           部屋を作る（ホスト）
         </button>
