@@ -268,15 +268,15 @@ export async function renderResultPoster(
   ctx.fillStyle = band;
   ctx.fillRect(0, 0, width, height);
 
-  // 白線イラスト — タイトル〜名前の上部ゾーンに置き、メイン語・サブと重ならないようにする
+  // 白線イラスト — メイン語の下〜サブ上あたり（上部より下げ、中央密集よりは上）
   if (input.mainCardId) {
     const art = await loadLineArt(input.mainCardId, pillar);
     if (art) {
-      const artSize = 340;
+      const artSize = 400;
       const ax = (width - artSize) / 2;
-      const ay = 58;
+      const ay = 500;
       ctx.save();
-      ctx.globalAlpha = 0.38;
+      ctx.globalAlpha = 0.36;
       ctx.drawImage(art, ax, ay, artSize, artSize);
       ctx.restore();
     }
