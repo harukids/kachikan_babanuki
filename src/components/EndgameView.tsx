@@ -31,7 +31,7 @@ export function EndgameView({ room, players, me, onChanged }: Props) {
   const [statement, setStatement] = useState(me.statement ?? "");
   const [copied, setCopied] = useState(false);
   const [savingPosterId, setSavingPosterId] = useState<string | null>(null);
-  const [generating, setGenerating] = useState(false);
+  const [generatingForId, setGeneratingForId] = useState<string | null>(null);
   const [cooldownUntil, setCooldownUntil] = useState(0);
   const [, setTick] = useState(0);
 
@@ -46,10 +46,12 @@ export function EndgameView({ room, players, me, onChanged }: Props) {
   }, [cooldownUntil]);
 
   const cooldownLeft = Math.max(0, Math.ceil((cooldownUntil - Date.now()) / 1000));
-  const canGenerate =
-    Boolean((me.reason ?? reason).trim()) &&
-    !generating &&
-    cooldownLeft <= 0;
+  const generating = generatingForId !== null;
+
+  function canGenerateFor(p: Player) {
+    const ownReason = p.id === me.id ? me.reason ?? reason : p.reason;
+    return Boolean((ownReason ?? "").trim()) && !generating && cooldownLeft <= 0;
+  }
 
   const mainCard = me.main_card_id ? getCard(me.main_card_id) : null;
   const posterPreview = getPosterPreviewClasses(mainCard?.pillar);
@@ -86,30 +88,36 @@ export function EndgameView({ room, players, me, onChanged }: Props) {
     });
   }
 
-  async function generateStatement() {
-    if (!canGenerate) return;
-    setGenerating(true);
+  async function generateStatementFor(target: Player) {
+    if (!canGenerateFor(target)) return;
+    const targetReason =
+      target.id === me.id ? (me.reason ?? reason).trim() : (target.reason ?? "").trim();
+    if (!targetReason) {
+      setError("理由がないため生成できません");
+      return;
+    }
+    setGeneratingForId(target.id);
     setError(null);
     try {
       const res = await fetch("/api/statement", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          mainCardId: me.main_card_id,
-          subCardIds: me.sub_card_ids ?? [],
-          handCardIds: me.hand ?? [],
-          reason: me.reason ?? reason,
+          mainCardId: target.main_card_id,
+          subCardIds: target.sub_card_ids ?? [],
+          handCardIds: target.hand ?? [],
+          reason: targetReason,
         }),
       });
       const data = (await res.json()) as { statement?: string; error?: string };
       if (!res.ok || !data.statement) {
         throw new Error(data.error || "生成に失敗しました");
       }
-      setStatement(data.statement);
+      if (target.id === me.id) setStatement(data.statement);
       const supabase = createBrowserClient();
       await saveStatement({
         supabase,
-        actorId: me.id,
+        actorId: target.id,
         statement: data.statement,
       });
       await onChanged();
@@ -117,7 +125,7 @@ export function EndgameView({ room, players, me, onChanged }: Props) {
     } catch (e) {
       setError(e instanceof Error ? e.message : "生成に失敗しました");
     } finally {
-      setGenerating(false);
+      setGeneratingForId(null);
     }
   }
 
@@ -340,11 +348,11 @@ export function EndgameView({ room, players, me, onChanged }: Props) {
               )}
               <button
                 type="button"
-                disabled={!canGenerate}
+                disabled={!canGenerateFor(me)}
                 className="rounded-xl border border-line px-3 py-2 text-sm font-semibold disabled:opacity-40"
-                onClick={() => void generateStatement()}
+                onClick={() => void generateStatementFor(me)}
               >
-                {generating
+                {generatingForId === me.id
                   ? "生成中…"
                   : cooldownLeft > 0
                     ? `再生成まで ${cooldownLeft}s`
@@ -424,39 +432,57 @@ export function EndgameView({ room, players, me, onChanged }: Props) {
                     {p.statement}
                   </p>
                 ) : null}
-                {p.id === me.id ? null : (
-                  <button
-                    type="button"
-                    disabled={savingPosterId === p.id}
-                    className="text-xs font-semibold text-mint underline disabled:opacity-50"
-                    onClick={() =>
-                      void (async () => {
-                        setSavingPosterId(p.id);
-                        setError(null);
-                        try {
-                          await downloadResultPoster({
-                            displayName: p.display_name,
-                            mainCardId: p.main_card_id,
-                            subCardIds: p.sub_card_ids ?? [],
-                            reason: p.reason,
-                            statement: p.statement,
-                            handCardIds: p.hand ?? [],
-                          });
-                        } catch (e) {
-                          setError(
-                            e instanceof Error
-                              ? e.message
-                              : "画像保存に失敗しました",
-                          );
-                        } finally {
-                          setSavingPosterId(null);
-                        }
-                      })()
-                    }
-                  >
-                    {savingPosterId === p.id ? "作成中…" : "この人の分を画像保存"}
-                  </button>
-                )}
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {me.is_host && p.id !== me.id ? (
+                    <button
+                      type="button"
+                      disabled={!canGenerateFor(p)}
+                      className="text-xs font-semibold text-accent underline disabled:opacity-40"
+                      onClick={() => void generateStatementFor(p)}
+                    >
+                      {generatingForId === p.id
+                        ? "生成中…"
+                        : cooldownLeft > 0
+                          ? `再生成まで ${cooldownLeft}s`
+                          : p.statement
+                            ? "この人のステートメントを作り直す"
+                            : "この人のステートメントを整える"}
+                    </button>
+                  ) : null}
+                  {p.id === me.id ? null : (
+                    <button
+                      type="button"
+                      disabled={savingPosterId === p.id}
+                      className="text-xs font-semibold text-mint underline disabled:opacity-50"
+                      onClick={() =>
+                        void (async () => {
+                          setSavingPosterId(p.id);
+                          setError(null);
+                          try {
+                            await downloadResultPoster({
+                              displayName: p.display_name,
+                              mainCardId: p.main_card_id,
+                              subCardIds: p.sub_card_ids ?? [],
+                              reason: p.reason,
+                              statement: p.statement,
+                              handCardIds: p.hand ?? [],
+                            });
+                          } catch (e) {
+                            setError(
+                              e instanceof Error
+                                ? e.message
+                                : "画像保存に失敗しました",
+                            );
+                          } finally {
+                            setSavingPosterId(null);
+                          }
+                        })()
+                      }
+                    >
+                      {savingPosterId === p.id ? "作成中…" : "この人の分を画像保存"}
+                    </button>
+                  )}
+                </div>
               </article>
             ))}
           </div>
