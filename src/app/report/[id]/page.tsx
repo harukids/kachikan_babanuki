@@ -7,6 +7,7 @@ import { PILLAR_LABEL } from "@/lib/deck";
 import { downloadTeamReportImage } from "@/lib/team-report-image";
 import type { TeamSnapshot } from "@/lib/team-report";
 import type { Pillar } from "@/lib/types";
+import { TeamAnalysisArtBg } from "@/components/TeamAnalysisArtBg";
 
 type ReportPayload = {
   id: string;
@@ -143,11 +144,14 @@ export default function TeamReportPage() {
         </ul>
       </section>
 
-      <section className="space-y-2 rounded-2xl border border-line bg-panel p-4">
-        <h2 className="text-sm font-semibold text-accent">チーム分析</h2>
-        <p className="text-sm leading-relaxed text-[#e8ecff]/90">
-          {report.analysis || "（分析なし）"}
-        </p>
+      <section className="relative overflow-hidden rounded-2xl border border-line bg-panel p-4">
+        <TeamAnalysisArtBg snapshot={report.snapshot} />
+        <div className="relative z-[1] space-y-2">
+          <h2 className="text-sm font-semibold text-accent">チーム分析</h2>
+          <p className="text-sm leading-relaxed text-[#e8ecff]/90">
+            {report.analysis || "（分析なし）"}
+          </p>
+        </div>
       </section>
 
       <div className="flex flex-wrap gap-2">

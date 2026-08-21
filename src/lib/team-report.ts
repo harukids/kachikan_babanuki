@@ -1,4 +1,4 @@
-import { getCard, PILLAR_LABEL } from "@/lib/deck";
+import { DECK, getCard, PILLAR_LABEL } from "@/lib/deck";
 import type { Pillar, Player } from "@/lib/types";
 
 export const MAX_TEAM_GROUPS = 4;
@@ -6,6 +6,7 @@ export const MAX_TEAM_GROUPS = 4;
 export type TeamMemberSnapshot = {
   id: string;
   displayName: string;
+  mainCardId?: string | null;
   mainLabel: string | null;
   mainPillar: Pillar | null;
   subLabels: string[];
@@ -22,6 +23,21 @@ export type TeamSnapshot = {
 
 export function emptyPillarCounts(): Record<Pillar, number> {
   return { heart: 0, work: 0, growth: 0 };
+}
+
+/** スナップショットからメインカードIDを復元（旧データはラベルから推定） */
+export function resolveMainCardIds(snapshot: TeamSnapshot): string[] {
+  const ids: string[] = [];
+  for (const m of snapshot.members) {
+    if (m.mainCardId) {
+      ids.push(m.mainCardId);
+      continue;
+    }
+    if (!m.mainLabel) continue;
+    const hit = DECK.find((c) => c.label === m.mainLabel);
+    if (hit) ids.push(hit.id);
+  }
+  return ids;
 }
 
 export function buildTeamSnapshot(
@@ -50,6 +66,7 @@ export function buildTeamSnapshot(
     memberSnaps.push({
       id: p.id,
       displayName: p.display_name,
+      mainCardId: p.main_card_id,
       mainLabel: main?.label ?? null,
       mainPillar: main?.pillar ?? null,
       subLabels: subs.map((s) => s!.label),

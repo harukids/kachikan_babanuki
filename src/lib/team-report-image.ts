@@ -1,12 +1,21 @@
 import { PILLAR_LABEL } from "@/lib/deck";
+import { resolveMainCardIds, type TeamSnapshot } from "@/lib/team-report";
 import type { Pillar } from "@/lib/types";
-import type { TeamSnapshot } from "@/lib/team-report";
 
 const PILLAR_COLORS: Record<Pillar, string> = {
   heart: "#ff8ec8",
   work: "#6ea8ff",
   growth: "#7ef0d4",
 };
+
+function loadImage(src: string): Promise<HTMLImageElement | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+}
 
 export async function downloadTeamReportImage(input: {
   groupLabel: string;
@@ -109,13 +118,42 @@ export async function downloadTeamReportImage(input: {
   // Analysis box
   const boxTop = Math.max(barY + 24, 820);
   const boxH = 1260 - boxTop - 40;
+  const boxX = 100;
+  const boxW = width - 200;
   ctx.fillStyle = "rgba(10, 12, 28, 0.55)";
-  roundRect(ctx, 100, boxTop, width - 200, boxH, 24);
+  roundRect(ctx, boxX, boxTop, boxW, boxH, 24);
   ctx.fill();
   ctx.strokeStyle = "rgba(255,226,138,0.45)";
   ctx.lineWidth = 2;
-  roundRect(ctx, 100, boxTop, width - 200, boxH, 24);
+  roundRect(ctx, boxX, boxTop, boxW, boxH, 24);
   ctx.stroke();
+
+  // メンバーのメイン価値観シンボルを背景に薄く
+  const artIds = resolveMainCardIds(input.snapshot).slice(0, 8);
+  const artLayouts = [
+    { x: 0.02, y: 0.08, s: 0.2, r: -18 },
+    { x: 0.78, y: 0.1, s: 0.22, r: 14 },
+    { x: 0.0, y: 0.42, s: 0.18, r: 22 },
+    { x: 0.8, y: 0.45, s: 0.2, r: -12 },
+    { x: 0.08, y: 0.7, s: 0.17, r: -28 },
+    { x: 0.74, y: 0.68, s: 0.19, r: 20 },
+    { x: 0.38, y: 0.25, s: 0.16, r: 8 },
+    { x: 0.42, y: 0.58, s: 0.15, r: -16 },
+  ];
+  for (let i = 0; i < artIds.length; i++) {
+    const img = await loadImage(`/illustrations/v3/${artIds[i]}.svg?v=20260822f`);
+    if (!img) continue;
+    const L = artLayouts[i % artLayouts.length];
+    const size = boxW * L.s;
+    const ax = boxX + boxW * L.x;
+    const ay = boxTop + boxH * L.y;
+    ctx.save();
+    ctx.globalAlpha = 0.16;
+    ctx.translate(ax + size / 2, ay + size / 2);
+    ctx.rotate((L.r * Math.PI) / 180);
+    ctx.drawImage(img, -size / 2, -size / 2, size, size);
+    ctx.restore();
+  }
 
   ctx.fillStyle = "#ffe28a";
   ctx.font = "700 24px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
