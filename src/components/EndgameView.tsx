@@ -294,6 +294,12 @@ export function EndgameView({ room, players, me, onChanged }: Props) {
                   {p.display_name}
                   {p.id === me.id ? "（あなた）" : ""}
                 </h3>
+                <p className="text-xs text-muted">
+                  最終5枚:{" "}
+                  {(p.hand ?? [])
+                    .map((id) => getCard(id)?.label ?? id)
+                    .join("、") || "—"}
+                </p>
                 <div className="flex flex-wrap gap-1">
                   <span className="rounded-full bg-accent/15 px-2 py-0.5 text-xs font-semibold text-accent">
                     メイン: {getCard(p.main_card_id ?? "")?.label ?? "—"}

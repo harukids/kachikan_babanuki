@@ -379,6 +379,9 @@ export async function closeRoom({
 export function formatResultsText(players: Player[]): string {
   const lines = ["価値観ババ抜き 結果", ""];
   for (const p of players) {
+    const finalFive = (p.hand ?? [])
+      .map((id) => DECK.find((c) => c.id === id)?.label ?? id)
+      .join("、");
     const main = p.main_card_id
       ? (DECK.find((c) => c.id === p.main_card_id)?.label ?? p.main_card_id)
       : "未設定";
@@ -386,6 +389,7 @@ export function formatResultsText(players: Player[]): string {
       .map((id) => DECK.find((c) => c.id === id)?.label ?? id)
       .join("、");
     lines.push(`【${p.display_name}】`);
+    lines.push(`最終5枚: ${finalFive || "（なし）"}`);
     lines.push(`メイン: ${main}`);
     lines.push(`サブ: ${subs || "未設定"}`);
     lines.push(`理由: ${p.reason ?? ""}`);
