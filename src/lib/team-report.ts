@@ -68,7 +68,8 @@ export function buildTeamSnapshot(
 
 export function pillarSummaryLines(snapshot: TeamSnapshot): string[] {
   const lines: string[] = [];
-  lines.push(`班: ${snapshot.groupLabel}（${snapshot.memberCount}人）`);
+  lines.push(`対象: このチーム（${snapshot.memberCount}人）`);
+  lines.push(`内部ラベル: ${snapshot.groupLabel}`);
   lines.push("メインの柱:");
   (["heart", "work", "growth"] as Pillar[]).forEach((p) => {
     lines.push(`- ${PILLAR_LABEL[p]}: ${snapshot.pillarMain[p]}`);

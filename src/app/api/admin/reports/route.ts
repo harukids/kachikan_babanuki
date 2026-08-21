@@ -25,6 +25,7 @@ async function generateAnalysis(summary: string): Promise<string> {
   const system = [
     "あなたはチームの価値観ワークのファシリテーターです。",
     "与えられた集計だけを根拠に、短くチーム傾向を日本語で書いてください。",
+    "分析文では、必ず『このチーム』と呼び、『チーム1』『班1』など番号では呼ばない。",
     "断定しすぎず、「〜の傾向がある」「〜を軸にする人がいる」程度のトーン。",
     "3〜5文、200〜320字。見出しや箇条書きは使わない。",
     "個人のプライベートな理由には踏み込まない。",
@@ -110,7 +111,7 @@ export async function POST(req: Request) {
 
     if (byGroup.size === 0) {
       return NextResponse.json(
-        { error: "少なくとも1人を班に振り分けてください" },
+        { error: "少なくとも1人をチームに振り分けてください" },
         { status: 400 },
       );
     }
@@ -126,7 +127,7 @@ export async function POST(req: Request) {
     const sortedGroups = [...byGroup.entries()].sort((a, b) => a[0] - b[0]);
     for (const [groupIndex, members] of sortedGroups) {
       if (members.length === 0) continue;
-      const groupLabel = `班${groupIndex}`;
+      const groupLabel = `チーム${groupIndex}`;
       const snapshot = buildTeamSnapshot(code, groupLabel, members);
       const summary = pillarSummaryLines(snapshot).join("\n");
       const analysis = await generateAnalysis(summary);

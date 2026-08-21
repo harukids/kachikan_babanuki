@@ -168,7 +168,7 @@ export default function AdminReportsPage() {
         <h1 className="text-2xl font-bold">チームレポート</h1>
         <p className="text-sm text-muted">
           結果フェーズ以降の部屋を読み込み、最大{MAX_TEAM_GROUPS}
-          班に振り分けてレポートを生成します。
+          チームに振り分けてレポートを生成します。
         </p>
       </header>
 
@@ -202,7 +202,7 @@ export default function AdminReportsPage() {
 
       {sortedPlayers.length > 0 && (
         <section className="space-y-3 rounded-2xl border border-line bg-panel p-4">
-          <h2 className="text-sm font-semibold text-accent">班の振り分け</h2>
+          <h2 className="text-sm font-semibold text-accent">チームの振り分け</h2>
           <ul className="space-y-2">
             {sortedPlayers.map((p) => {
               const main = p.main_card_id ? getCard(p.main_card_id) : null;
@@ -232,7 +232,7 @@ export default function AdminReportsPage() {
                     {Array.from({ length: MAX_TEAM_GROUPS }, (_, i) => i + 1).map(
                       (n) => (
                         <option key={n} value={n}>
-                          班{n}
+                          チーム{n}
                         </option>
                       ),
                     )}
