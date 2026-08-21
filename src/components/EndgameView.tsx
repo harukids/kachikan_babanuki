@@ -9,7 +9,7 @@ import {
   submitSelection,
 } from "@/lib/game-actions";
 import { createBrowserClient } from "@/lib/supabase/client";
-import { downloadResultPoster } from "@/lib/result-poster";
+import { downloadResultPoster, getPosterPreviewClasses } from "@/lib/result-poster";
 import type { Player, Room } from "@/lib/types";
 
 type Props = {
@@ -27,6 +27,9 @@ export function EndgameView({ room, players, me, onChanged }: Props) {
   const [reason, setReason] = useState(me.reason ?? "");
   const [copied, setCopied] = useState(false);
   const [savingPosterId, setSavingPosterId] = useState<string | null>(null);
+
+  const mainCard = me.main_card_id ? getCard(me.main_card_id) : null;
+  const posterPreview = getPosterPreviewClasses(mainCard?.pillar);
 
   const sorted = useMemo(
     () =>
@@ -231,14 +234,17 @@ export function EndgameView({ room, players, me, onChanged }: Props) {
             </button>
           </div>
 
-          {/* 自分のポスタープレビュー風 */}
-          <div className="overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-[#1a2a5a]/80 via-[#3a1f55]/75 to-[#4a2038]/8 p-5 shadow-[0_0_40px_rgba(183,148,255,0.2)] backdrop-blur-md">
-            <p className="text-xs font-semibold tracking-wide text-[#c9d7ff]">
+          {/* 自分のポスタープレビュー風（柱で配色） */}
+          <div
+            className={`overflow-hidden rounded-2xl border p-5 backdrop-blur-md ${posterPreview.card}`}
+          >
+            <p className={`text-xs font-semibold tracking-wide ${posterPreview.title}`}>
               わたしの価値観
+              {mainCard ? ` · ${PILLAR_LABEL[mainCard.pillar]}` : ""}
             </p>
             <p className="mt-1 text-sm text-muted">{me.display_name}</p>
-            <p className="mt-4 bg-gradient-to-r from-[#6ea8ff] via-[#ff8ec8] to-[#ffb086] bg-clip-text text-4xl font-bold text-transparent">
-              {getCard(me.main_card_id ?? "")?.label ?? "—"}
+            <p className={`mt-4 text-4xl font-bold ${posterPreview.main}`}>
+              {mainCard?.label ?? "—"}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               {(me.sub_card_ids ?? []).map((id) => (
@@ -256,7 +262,7 @@ export function EndgameView({ room, players, me, onChanged }: Props) {
             <button
               type="button"
               disabled={savingPosterId === me.id}
-              className="mt-5 rounded-xl bg-gradient-to-r from-[#6ea8ff] via-[#ff8ec8] to-[#ffb086] px-4 py-3 text-sm font-bold text-[#12122a] disabled:opacity-50"
+              className={`mt-5 rounded-xl px-4 py-3 text-sm font-bold disabled:opacity-50 ${posterPreview.button}`}
               onClick={() =>
                 void (async () => {
                   setSavingPosterId(me.id);

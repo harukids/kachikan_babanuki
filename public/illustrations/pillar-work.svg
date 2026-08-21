@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <!-- work pillar: mountain peak + flag -->
+  <path
+    d="M56 400 L180 200 L256 300 L340 160 L456 400 Z"
+    stroke="#ffffff"
+    stroke-width="10"
+    stroke-linejoin="round"
+  />
+  <path d="M340 160 L340 96" stroke="#ffffff" stroke-width="8" stroke-linecap="round" />
+  <path d="M340 96 L400 120 L340 144 Z" stroke="#ffffff" stroke-width="6" stroke-linejoin="round" />
+  <path d="M120 400 H392" stroke="#ffffff" stroke-width="8" stroke-linecap="round" />
+  <circle cx="256" cy="300" r="14" stroke="#ffffff" stroke-width="6" />
+</svg>

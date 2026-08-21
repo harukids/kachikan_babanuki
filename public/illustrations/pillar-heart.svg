@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <!-- heart pillar: soft heart + spark -->
+  <path
+    d="M256 420 C256 420 80 300 80 190 C80 130 120 96 168 96 C204 96 232 116 256 148 C280 116 308 96 344 96 C392 96 432 130 432 190 C432 300 256 420 256 420 Z"
+    stroke="#ffffff"
+    stroke-width="10"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M256 168 L264 196 L292 196 L270 214 L278 242 L256 224 L234 242 L242 214 L220 196 L248 196 Z"
+    stroke="#ffffff"
+    stroke-width="6"
+    stroke-linejoin="round"
+  />
+  <circle cx="128" cy="128" r="10" stroke="#ffffff" stroke-width="5" />
+  <circle cx="392" cy="140" r="7" stroke="#ffffff" stroke-width="4" />
+</svg>
