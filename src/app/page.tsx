@@ -88,9 +88,9 @@ export default function HomePage() {
           リモート価値観ババ抜き
         </p>
         <h1 className="text-3xl font-bold leading-tight text-foreground">
-          仕事の仲間と、
+          価値観を選び、
           <br />
-          価値観を言葉にする
+          言葉にする
         </h1>
         <p className="text-sm leading-relaxed text-muted">
           Zoomなどで話しながら、各自のブラウザでカードを取ります。デッキ{" "}
