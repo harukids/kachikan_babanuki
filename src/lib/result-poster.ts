@@ -390,7 +390,8 @@ export async function renderResultPoster(
   ctx.font = "600 22px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
   ctx.fillText("MAIN VALUE", width / 2, underlineY + 42);
 
-  const subY = Math.max(740, underlineY + 88);
+  // MAIN VALUE との余白を少し詰めて、下の文章欄に余裕を渡す
+  const subY = Math.max(700, underlineY + 56);
   const boxW = 360;
   const gap = 40;
   const startX = (width - (boxW * 2 + gap)) / 2;
@@ -420,7 +421,7 @@ export async function renderResultPoster(
 
   // 細い内枠の下辺は y=1272。日付はその上に置く
   const dateY = 1248;
-  const boxTop = Math.min(subY + 170, 880);
+  const boxTop = Math.min(subY + 158, 860);
   const reason = (input.reason ?? "").trim() || "（理由未入力）";
   const statement = (input.statement ?? "").trim();
   const finalFiveReserve = 52;
