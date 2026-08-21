@@ -459,7 +459,9 @@ export default function RoomPage() {
           room={room}
           players={players}
           me={me}
-          onChanged={refresh}
+          onChanged={async () => {
+            await refresh();
+          }}
         />
       )}
 
@@ -491,7 +493,9 @@ export default function RoomPage() {
             room={room}
             players={players}
             me={me}
-            onChanged={refresh}
+            onChanged={async () => {
+              await refresh();
+            }}
           />
         )}
 
