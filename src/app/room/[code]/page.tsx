@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { createBrowserClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import { clearPlayerId, loadPlayerId } from "@/lib/player-storage";
@@ -28,6 +28,7 @@ export default function RoomPage() {
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState<"link" | "code" | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const joiningRef = useRef(false);
 
   async function copyText(kind: "link" | "code", text: string) {
     try {
@@ -45,7 +46,7 @@ export default function RoomPage() {
   );
 
   const refresh = useCallback(async () => {
-    if (!isSupabaseConfigured()) return;
+    if (!isSupabaseConfigured()) return [] as Player[];
     const supabase = createBrowserClient();
     const [{ data: roomData, error: roomError }, { data: playerData, error: playerError }] =
       await Promise.all([
@@ -58,22 +59,34 @@ export default function RoomPage() {
       ]);
     if (roomError) throw roomError;
     if (playerError) throw playerError;
+
+    const nextPlayers = (playerData as Player[]) ?? [];
     setRoom(roomData as Room | null);
-    setPlayers((playerData as Player[]) ?? []);
+    setPlayers(nextPlayers);
     setLoaded(true);
+    return nextPlayers;
   }, [code]);
 
   useEffect(() => {
+    setLoaded(false);
+    setPlayers([]);
+    setRoom(null);
     setPlayerId(loadPlayerId(code));
   }, [code]);
 
-  // 保存された playerId が部屋にいない（別端末の残骸など）ならクリア
+  // 名簿と照合。入室中は消さない。名簿にいない古い ID だけクリア
   useEffect(() => {
-    if (!loaded || !playerId) return;
-    if (players.some((p) => p.id === playerId)) return;
-    clearPlayerId(code);
-    setPlayerId(null);
-  }, [loaded, players, playerId, code]);
+    if (!loaded || joiningRef.current) return;
+    const stored = loadPlayerId(code);
+    if (stored && players.some((p) => p.id === stored)) {
+      setPlayerId(stored);
+      return;
+    }
+    if (stored && !players.some((p) => p.id === stored)) {
+      clearPlayerId(code);
+      setPlayerId(null);
+    }
+  }, [loaded, code, players]);
 
   useEffect(() => {
     if (!isSupabaseConfigured()) {
@@ -123,17 +136,47 @@ export default function RoomPage() {
   }, [code, refresh]);
 
   async function joinFromInvite() {
-    if (!room || room.phase !== "LOBBY") return;
+    if (!room || room.phase !== "LOBBY" || busy) return;
     setBusy(true);
+    joiningRef.current = true;
     setError(null);
     try {
       const supabase = createBrowserClient();
-      const id = await joinRoomAsGuest(supabase, code, joinName);
+      const { playerId: id, displayName } = await joinRoomAsGuest(
+        supabase,
+        code,
+        joinName,
+      );
+      const optimistic: Player = {
+        id,
+        room_code: code,
+        display_name: displayName,
+        seat_index: players.length,
+        hand: [],
+        turns_completed: 0,
+        main_card_id: null,
+        sub_card_ids: [],
+        reason: null,
+        ready_selecting: false,
+        ready_writing: false,
+        is_host: false,
+      };
       setPlayerId(id);
-      await refresh();
+      setPlayers((prev) =>
+        prev.some((p) => p.id === id) ? prev : [...prev, optimistic],
+      );
+
+      const next = await refresh();
+      if (!next.some((p) => p.id === id)) {
+        setPlayers((prev) =>
+          prev.some((p) => p.id === id) ? prev : [...prev, optimistic],
+        );
+      }
+      setPlayerId(id);
     } catch (e) {
       setError(e instanceof Error ? e.message : "入室できませんでした");
     } finally {
+      joiningRef.current = false;
       setBusy(false);
     }
   }
@@ -230,6 +273,14 @@ export default function RoomPage() {
 
   // 招待リンク直開き：まだ参加者でない場合は名前入力
   if (loaded && room.phase === "LOBBY" && !me) {
+    if (busy) {
+      return (
+        <main className="mx-auto flex max-w-lg flex-1 items-center justify-center px-4 py-12 text-muted">
+          入室しています…
+        </main>
+      );
+    }
+
     return (
       <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center gap-6 px-4 py-12">
         <header className="space-y-2">

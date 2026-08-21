@@ -6,7 +6,7 @@ export async function joinRoomAsGuest(
   supabase: SupabaseClient,
   code: string,
   displayName: string,
-): Promise<string> {
+): Promise<{ playerId: string; displayName: string }> {
   const { data: room, error: roomError } = await supabase
     .from("rooms")
     .select("code, phase")
@@ -28,11 +28,14 @@ export async function joinRoomAsGuest(
   }
 
   const playerId = crypto.randomUUID();
+  const name = displayName.trim() || "ゲスト";
+  const seatIndex = playersNow?.length ?? 0;
+
   const { error: playerError } = await supabase.from("players").insert({
     id: playerId,
     room_code: code,
-    display_name: displayName.trim() || "ゲスト",
-    seat_index: playersNow?.length ?? 0,
+    display_name: name,
+    seat_index: seatIndex,
     is_host: false,
     hand: [],
   });
@@ -46,5 +49,5 @@ export async function joinRoomAsGuest(
   if (seatError) throw seatError;
 
   savePlayerId(code, playerId);
-  return playerId;
+  return { playerId, displayName: name };
 }
