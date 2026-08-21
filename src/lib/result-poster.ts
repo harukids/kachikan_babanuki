@@ -315,11 +315,11 @@ export async function renderResultPoster(
   if (input.mainCardId) {
     const art = await loadLineArt(input.mainCardId, pillar);
     if (art) {
-      const artSize = 400;
+      const artSize = 560;
       const ax = (width - artSize) / 2;
-      const ay = 200;
+      const ay = 140;
       ctx.save();
-      ctx.globalAlpha = 0.34;
+      ctx.globalAlpha = 0.3;
       ctx.drawImage(art, ax, ay, artSize, artSize);
       ctx.restore();
     }
