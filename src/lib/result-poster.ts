@@ -6,6 +6,8 @@ export type PosterInput = {
   mainCardId: string | null;
   subCardIds: string[];
   reason: string | null;
+  /** 選定時点の手札（最終5枚） */
+  handCardIds?: string[];
 };
 
 type PillarTheme = {
@@ -399,9 +401,10 @@ export async function renderResultPoster(
     ctx.textBaseline = "alphabetic";
   });
 
-  const reasonTop = Math.min(subY + 170, 920);
+  const reasonTop = Math.min(subY + 170, 900);
   const reason = (input.reason ?? "").trim() || "（理由未入力）";
-  const reasonH = Math.min(260, 1260 - reasonTop);
+  const finalFiveReserve = 52;
+  const reasonH = Math.min(240, 1260 - reasonTop - finalFiveReserve);
   ctx.fillStyle = "rgba(10, 12, 28, 0.55)";
   roundRect(ctx, 120, reasonTop, width - 240, reasonH, 28);
   ctx.fill();
@@ -427,6 +430,21 @@ export async function renderResultPoster(
     ctx.fillText(line, width / 2, reasonTextTop + i * fitted.lineHeight);
   });
   ctx.textBaseline = "alphabetic";
+
+  // 最終5枚（理由欄の下・小さめ）
+  const handIds = (input.handCardIds ?? []).slice(0, 5);
+  const handLabels = handIds
+    .map((id) => getCard(id)?.label)
+    .filter((label): label is string => Boolean(label));
+  if (handLabels.length > 0) {
+    ctx.fillStyle = theme.footer;
+    ctx.font = "500 18px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
+    ctx.fillText(
+      `最終5枚  ${handLabels.join("  ·  ")}`,
+      width / 2,
+      reasonTop + reasonH + 34,
+    );
+  }
 
   ctx.fillStyle = theme.footer;
   ctx.font = "500 22px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";

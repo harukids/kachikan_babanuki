@@ -46,6 +46,7 @@ export default function PosterPreviewPage() {
             mainCardId: mainId,
             subCardIds: [subA, subB],
             reason,
+            handCardIds: [mainId, subA, subB, "heart-01", "work-08"],
           });
           if (!cancelled) {
             setPreviewUrl(url);
@@ -176,6 +177,7 @@ export default function PosterPreviewPage() {
                 mainCardId: mainId,
                 subCardIds: [subA, subB],
                 reason,
+                handCardIds: [mainId, subA, subB, "heart-01", "work-08"],
               });
             } catch (e) {
               setError(e instanceof Error ? e.message : "保存に失敗しました");

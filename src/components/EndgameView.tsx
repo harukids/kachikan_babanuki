@@ -273,6 +273,7 @@ export function EndgameView({ room, players, me, onChanged }: Props) {
                       mainCardId: me.main_card_id,
                       subCardIds: me.sub_card_ids ?? [],
                       reason: me.reason,
+                      handCardIds: me.hand ?? [],
                     });
                   } catch (e) {
                     setError(
@@ -337,6 +338,7 @@ export function EndgameView({ room, players, me, onChanged }: Props) {
                             mainCardId: p.main_card_id,
                             subCardIds: p.sub_card_ids ?? [],
                             reason: p.reason,
+                            handCardIds: p.hand ?? [],
                           });
                         } catch (e) {
                           setError(
