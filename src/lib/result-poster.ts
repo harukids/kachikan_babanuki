@@ -204,9 +204,11 @@ function loadImage(src: string): Promise<HTMLImageElement | null> {
   });
 }
 
-/** A案: 静的アセット。カード専用 → 柱フォールバックの順で探す */
+/** ポスター用は v3。カード専用 → 柱フォールバック */
 async function loadLineArt(cardId: string, pillar: Pillar): Promise<HTMLImageElement | null> {
   const candidates = [
+    `/illustrations/v3/${cardId}.svg`,
+    `/illustrations/v3/${cardId}.png`,
     `/illustrations/${cardId}.svg`,
     `/illustrations/${cardId}.png`,
     `/illustrations/pillar-${pillar}.svg`,

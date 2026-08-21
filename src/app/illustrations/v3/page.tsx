@@ -13,7 +13,7 @@ export default function IllustrationsV3Page() {
         <p className="text-xs font-semibold tracking-wide text-mint">プレビュー · v3</p>
         <h1 className="text-2xl font-bold">シンボル＋デザイン装飾</h1>
         <p className="text-sm text-muted">
-          v1の分かりやすさに、柱見本のような星・点・副線を足した試作です（例: 「愛」はハート＋きらめき）。
+          採用セットです（ポスターもこちら）。「継続」だけ v2 の一筆循環に差し替えています。
         </p>
         <div className="flex flex-wrap gap-3 text-sm">
           <Link href="/illustrations" className="text-mint underline">
