@@ -134,13 +134,15 @@ export default function AdminReportsPage() {
         <label className="block space-y-1">
           <span className="text-sm text-muted">合言葉</span>
           <input
-            type="password"
+            type="text"
+            autoComplete="off"
             className="w-full rounded-xl border border-line bg-panel px-3 py-2"
             value={secret}
             onChange={(e) => setSecret(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") void verify();
             }}
+            placeholder="合言葉を入力"
           />
         </label>
         <button
