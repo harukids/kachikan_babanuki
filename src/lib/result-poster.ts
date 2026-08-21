@@ -176,6 +176,10 @@ export function getPosterPreviewClasses(pillar: Pillar | null | undefined): {
   }
 }
 
+/** 行頭禁則（改行文頭に来たら前行へぶら下げる） */
+const LINE_START_KINSOKU =
+  /[、。，．！？）」』〉》〕】ぁぃぅぇぉっゃゅょゎァィゥェォッャュョヮ゛゜ー…‥･・]/;
+
 function wrapText(
   ctx: CanvasRenderingContext2D,
   text: string,
@@ -185,10 +189,21 @@ function wrapText(
   const lines: string[] = [];
   let line = "";
   for (const ch of chars) {
+    if (ch === "\n") {
+      lines.push(line);
+      line = "";
+      continue;
+    }
     const test = line + ch;
     if (ctx.measureText(test).width > maxWidth && line) {
-      lines.push(line);
-      line = ch;
+      if (LINE_START_KINSOKU.test(ch)) {
+        // ぶら下がり: 句読点などは前の行に残してわずかに枠外へ
+        lines.push(line + ch);
+        line = "";
+      } else {
+        lines.push(line);
+        line = ch;
+      }
     } else {
       line = test;
     }
@@ -401,10 +416,12 @@ export async function renderResultPoster(
     ctx.textBaseline = "alphabetic";
   });
 
+  // 細い内枠の下辺は y=1272。日付はその上に置く
+  const dateY = 1248;
   const reasonTop = Math.min(subY + 170, 900);
   const reason = (input.reason ?? "").trim() || "（理由未入力）";
   const finalFiveReserve = 52;
-  const reasonH = Math.min(240, 1260 - reasonTop - finalFiveReserve);
+  const reasonH = Math.min(240, dateY - 40 - reasonTop - finalFiveReserve);
   ctx.fillStyle = "rgba(10, 12, 28, 0.55)";
   roundRect(ctx, 120, reasonTop, width - 240, reasonH, 28);
   ctx.fill();
@@ -445,7 +462,7 @@ export async function renderResultPoster(
   ctx.fillStyle = theme.footer;
   ctx.font = "500 22px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
   const date = new Date().toLocaleDateString("ja-JP");
-  ctx.fillText(date, width / 2, 1280);
+  ctx.fillText(date, width / 2, dateY);
 
   return canvas;
 }
