@@ -7,7 +7,7 @@ import { PILLAR_LABEL } from "@/lib/deck";
 import { downloadTeamReportImage } from "@/lib/team-report-image";
 import type { TeamSnapshot } from "@/lib/team-report";
 import type { Pillar } from "@/lib/types";
-import { TeamAnalysisArtBg } from "@/components/TeamAnalysisArtBg";
+import { TeamReportArtBg } from "@/components/TeamReportArtBg";
 
 type ReportPayload = {
   id: string;
@@ -87,7 +87,9 @@ export default function TeamReportPage() {
   const pillars: Pillar[] = ["heart", "work", "growth"];
 
   return (
-    <main className="relative z-[1] mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-10">
+    <>
+      <TeamReportArtBg snapshot={report.snapshot} />
+      <main className="relative z-[1] mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-10">
       <header className="space-y-2">
         <p className="text-xs font-semibold tracking-wide text-mint">
           Value Drop · チームレポート
@@ -144,14 +146,11 @@ export default function TeamReportPage() {
         </ul>
       </section>
 
-      <section className="relative overflow-hidden rounded-2xl border border-line bg-panel p-4">
-        <TeamAnalysisArtBg snapshot={report.snapshot} />
-        <div className="relative z-[1] space-y-2">
-          <h2 className="text-sm font-semibold text-accent">チーム分析</h2>
-          <p className="text-sm leading-relaxed text-[#e8ecff]/90">
-            {report.analysis || "（分析なし）"}
-          </p>
-        </div>
+      <section className="space-y-2 rounded-2xl border border-line bg-panel p-4">
+        <h2 className="text-sm font-semibold text-accent">チーム分析</h2>
+        <p className="text-sm leading-relaxed text-[#e8ecff]/90">
+          {report.analysis || "（分析なし）"}
+        </p>
       </section>
 
       <div className="flex flex-wrap gap-2">
@@ -208,5 +207,6 @@ export default function TeamReportPage() {
         トップへ
       </Link>
     </main>
+    </>
   );
 }

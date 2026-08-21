@@ -1,5 +1,5 @@
 import { PILLAR_LABEL } from "@/lib/deck";
-import { resolveMainCardIds, type TeamSnapshot } from "@/lib/team-report";
+import { resolveValueCardIds, type TeamSnapshot } from "@/lib/team-report";
 import type { Pillar } from "@/lib/types";
 
 const PILLAR_COLORS: Record<Pillar, string> = {
@@ -46,6 +46,37 @@ export async function downloadTeamReportImage(input: {
   bg.addColorStop(1, "#1a1230");
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, width, height);
+
+  // メンバーのメイン＋サブ線画を全体背景に
+  const artIds = resolveValueCardIds(input.snapshot).slice(0, 15);
+  const fullLayouts = [
+    { x: 40, y: 80, s: 160, r: -20 },
+    { x: 880, y: 60, s: 150, r: 16 },
+    { x: 20, y: 280, s: 130, r: 24 },
+    { x: 900, y: 260, s: 140, r: -14 },
+    { x: 60, y: 480, s: 120, r: -28 },
+    { x: 880, y: 500, s: 135, r: 18 },
+    { x: 30, y: 700, s: 145, r: 12 },
+    { x: 890, y: 680, s: 155, r: -22 },
+    { x: 80, y: 920, s: 125, r: -10 },
+    { x: 860, y: 940, s: 130, r: 26 },
+    { x: 420, y: 100, s: 110, r: 6 },
+    { x: 400, y: 420, s: 100, r: -18 },
+    { x: 430, y: 780, s: 115, r: 14 },
+    { x: 200, y: 1100, s: 120, r: 8 },
+    { x: 720, y: 1120, s: 130, r: -16 },
+  ];
+  for (let i = 0; i < artIds.length; i++) {
+    const img = await loadImage(`/illustrations/v3/${artIds[i]}.svg?v=20260822g`);
+    if (!img) continue;
+    const L = fullLayouts[i % fullLayouts.length];
+    ctx.save();
+    ctx.globalAlpha = 0.13;
+    ctx.translate(L.x + L.s / 2, L.y + L.s / 2);
+    ctx.rotate((L.r * Math.PI) / 180);
+    ctx.drawImage(img, -L.s / 2, -L.s / 2, L.s, L.s);
+    ctx.restore();
+  }
 
   ctx.strokeStyle = "rgba(255,255,255,0.22)";
   ctx.lineWidth = 4;
@@ -127,33 +158,6 @@ export async function downloadTeamReportImage(input: {
   ctx.lineWidth = 2;
   roundRect(ctx, boxX, boxTop, boxW, boxH, 24);
   ctx.stroke();
-
-  // メンバーのメイン価値観シンボルを背景に薄く
-  const artIds = resolveMainCardIds(input.snapshot).slice(0, 8);
-  const artLayouts = [
-    { x: 0.02, y: 0.08, s: 0.2, r: -18 },
-    { x: 0.78, y: 0.1, s: 0.22, r: 14 },
-    { x: 0.0, y: 0.42, s: 0.18, r: 22 },
-    { x: 0.8, y: 0.45, s: 0.2, r: -12 },
-    { x: 0.08, y: 0.7, s: 0.17, r: -28 },
-    { x: 0.74, y: 0.68, s: 0.19, r: 20 },
-    { x: 0.38, y: 0.25, s: 0.16, r: 8 },
-    { x: 0.42, y: 0.58, s: 0.15, r: -16 },
-  ];
-  for (let i = 0; i < artIds.length; i++) {
-    const img = await loadImage(`/illustrations/v3/${artIds[i]}.svg?v=20260822f`);
-    if (!img) continue;
-    const L = artLayouts[i % artLayouts.length];
-    const size = boxW * L.s;
-    const ax = boxX + boxW * L.x;
-    const ay = boxTop + boxH * L.y;
-    ctx.save();
-    ctx.globalAlpha = 0.16;
-    ctx.translate(ax + size / 2, ay + size / 2);
-    ctx.rotate((L.r * Math.PI) / 180);
-    ctx.drawImage(img, -size / 2, -size / 2, size, size);
-    ctx.restore();
-  }
 
   ctx.fillStyle = "#ffe28a";
   ctx.font = "700 24px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";

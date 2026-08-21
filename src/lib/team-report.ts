@@ -7,6 +7,7 @@ export type TeamMemberSnapshot = {
   id: string;
   displayName: string;
   mainCardId?: string | null;
+  subCardIds?: string[];
   mainLabel: string | null;
   mainPillar: Pillar | null;
   subLabels: string[];
@@ -25,19 +26,39 @@ export function emptyPillarCounts(): Record<Pillar, number> {
   return { heart: 0, work: 0, growth: 0 };
 }
 
-/** スナップショットからメインカードIDを復元（旧データはラベルから推定） */
-export function resolveMainCardIds(snapshot: TeamSnapshot): string[] {
+/** スナップショットから価値観カードIDを復元（メイン＋サブ） */
+export function resolveValueCardIds(snapshot: TeamSnapshot): string[] {
   const ids: string[] = [];
+  const seen = new Set<string>();
+
+  const push = (id: string | null | undefined) => {
+    if (!id || seen.has(id)) return;
+    seen.add(id);
+    ids.push(id);
+  };
+
   for (const m of snapshot.members) {
-    if (m.mainCardId) {
-      ids.push(m.mainCardId);
-      continue;
+    push(m.mainCardId ?? undefined);
+    for (const sid of m.subCardIds ?? []) push(sid);
+
+    // 旧データ互換: IDが無い場合はラベルから推定
+    if (!m.mainCardId && m.mainLabel) {
+      const hit = DECK.find((c) => c.label === m.mainLabel);
+      if (hit) push(hit.id);
     }
-    if (!m.mainLabel) continue;
-    const hit = DECK.find((c) => c.label === m.mainLabel);
-    if (hit) ids.push(hit.id);
+    if ((!m.subCardIds || m.subCardIds.length === 0) && m.subLabels?.length) {
+      for (const label of m.subLabels) {
+        const hit = DECK.find((c) => c.label === label);
+        if (hit) push(hit.id);
+      }
+    }
   }
   return ids;
+}
+
+/** @deprecated use resolveValueCardIds */
+export function resolveMainCardIds(snapshot: TeamSnapshot): string[] {
+  return resolveValueCardIds(snapshot);
 }
 
 export function buildTeamSnapshot(
@@ -67,6 +88,7 @@ export function buildTeamSnapshot(
       id: p.id,
       displayName: p.display_name,
       mainCardId: p.main_card_id,
+      subCardIds: p.sub_card_ids ?? [],
       mainLabel: main?.label ?? null,
       mainPillar: main?.pillar ?? null,
       subLabels: subs.map((s) => s!.label),
