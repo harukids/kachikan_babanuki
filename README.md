@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 価値観ババ抜き（リモート）
 
-## Getting Started
+AI-Driven School 卒業制作。仕事仲間と価値観を言語化するカードワークの Web アプリ。
 
-First, run the development server:
+## セットアップ
+
+1. [Supabase](https://supabase.com) でプロジェクト作成
+2. `supabase/schema.sql` を SQL Editor で実行
+3. 環境変数をコピーして値を入れる
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.local.example .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+4. 開発サーバー
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm install
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+5. http://localhost:3000 を開く
 
-## Learn More
+## ドキュメント
 
-To learn more about Next.js, take a look at the following resources:
+- 状態マシン: `../卒業制作_状態マシン仕様.md`
+- 企画スライド: Surge 上の企画概要
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## いま動くもの
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- ホーム: 部屋作成 / コードで入室（シェル）
+- 型・60枚デッキ・localStorage 復帰キー
+- Supabase スキーマ
 
-## Deploy on Vercel
+## 次に作るもの
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. LOBBY の実同期（入室・席順並べ替え・開始）
+2. DEALING → 1ターン（STEAL → CONFIRM → DISCARD → GAIN）
+3. 5ラウンド → 選定 → 理由 → 結果

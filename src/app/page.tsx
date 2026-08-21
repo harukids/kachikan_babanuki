@@ -1,69 +1,199 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { generateRoomCode, normalizeRoomCode } from "@/lib/room-code";
+import { isSupabaseConfigured, createBrowserClient } from "@/lib/supabase/client";
+import { savePlayerId } from "@/lib/player-storage";
+import { DECK } from "@/lib/deck";
+
+export default function HomePage() {
+  const router = useRouter();
+  const [name, setName] = useState("");
+  const [joinCode, setJoinCode] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const configured = isSupabaseConfigured();
+
+  async function createRoom() {
+    setError(null);
+    const displayName = name.trim() || "ホスト";
+    if (!configured) {
+      setError("先に .env.local で Supabase を設定してください。");
+      return;
+    }
+    setBusy(true);
+    try {
+      const supabase = createBrowserClient();
+      const code = generateRoomCode();
+      const playerId = crypto.randomUUID();
+
+      const { error: roomError } = await supabase.from("rooms").insert({
+        code,
+        phase: "LOBBY",
+        seat_order: [playerId],
+        host_id: playerId,
+        field: [],
+        deny_count: 0,
+      });
+      if (roomError) throw roomError;
+
+      const { error: playerError } = await supabase.from("players").insert({
+        id: playerId,
+        room_code: code,
+        display_name: displayName,
+        seat_index: 0,
+        is_host: true,
+        hand: [],
+      });
+      if (playerError) throw playerError;
+
+      savePlayerId(code, playerId);
+      router.push(`/room/${code}`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "部屋を作れませんでした");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function joinRoom() {
+    setError(null);
+    const code = normalizeRoomCode(joinCode);
+    const displayName = name.trim() || "ゲスト";
+    if (!code) {
+      setError("部屋コードを入力してください");
+      return;
+    }
+    if (!configured) {
+      setError("先に .env.local で Supabase を設定してください。");
+      return;
+    }
+    setBusy(true);
+    try {
+      const supabase = createBrowserClient();
+      const { data: room, error: roomError } = await supabase
+        .from("rooms")
+        .select("code, phase")
+        .eq("code", code)
+        .maybeSingle();
+      if (roomError) throw roomError;
+      if (!room) throw new Error("部屋が見つかりません");
+      if (room.phase !== "LOBBY") {
+        throw new Error("この部屋はすでに開始済みです");
+      }
+
+      const playerId = crypto.randomUUID();
+      const { data: playersNow } = await supabase
+        .from("players")
+        .select("id")
+        .eq("room_code", code);
+      if ((playersNow?.length ?? 0) >= 8) {
+        throw new Error("この部屋は満員です（上限8人）");
+      }
+
+      const { error: playerError } = await supabase.from("players").insert({
+        id: playerId,
+        room_code: code,
+        display_name: displayName,
+        seat_index: playersNow?.length ?? 0,
+        is_host: false,
+        hand: [],
+      });
+      if (playerError) throw playerError;
+
+      const seatOrder = [...(playersNow?.map((p) => p.id) ?? []), playerId];
+      await supabase.from("rooms").update({ seat_order: seatOrder }).eq("code", code);
+
+      savePlayerId(code, playerId);
+      router.push(`/room/${code}`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "入室できませんでした");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center gap-8 px-4 py-12">
+      <header className="space-y-2">
+        <p className="text-sm font-semibold tracking-wide text-mint">
+          リモート価値観ババ抜き
+        </p>
+        <h1 className="text-3xl font-bold leading-tight text-foreground">
+          仕事の仲間と、
+          <br />
+          価値観を言葉にする
+        </h1>
+        <p className="text-sm leading-relaxed text-muted">
+          Zoomで話しながら、各自のブラウザでカードを取ります。デッキ{" "}
+          {DECK.length} 枚。通話はアプリに含めません。
+        </p>
+      </header>
+
+      {!configured && (
+        <div className="rounded-xl border border-line bg-panel p-4 text-sm text-muted">
+          <p className="font-semibold text-accent">セットアップが必要です</p>
+          <ol className="mt-2 list-decimal space-y-1 pl-5">
+            <li>Supabase プロジェクトを作成</li>
+            <li>
+              <code className="text-foreground">supabase/schema.sql</code> を実行
+            </li>
+            <li>
+              <code className="text-foreground">.env.local.example</code> をコピーしてキーを入れる
+            </li>
+          </ol>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      )}
+
+      <div className="space-y-4 rounded-2xl border border-line bg-panel p-5">
+        <label className="block space-y-1.5">
+          <span className="text-xs font-semibold text-mint">表示名</span>
+          <input
+            className="w-full rounded-xl border border-line bg-background px-3 py-2.5 text-foreground outline-none focus:border-accent"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="例: はるき"
+            maxLength={24}
+          />
+        </label>
+
+        <button
+          type="button"
+          disabled={busy}
+          onClick={createRoom}
+          className="w-full rounded-xl bg-accent px-4 py-3 text-sm font-bold text-[#1c2421] disabled:opacity-50"
+        >
+          部屋を作る（ホスト）
+        </button>
+
+        <div className="relative py-2 text-center text-xs text-muted">
+          <span className="bg-panel px-2">または</span>
+          <div className="absolute inset-x-0 top-1/2 -z-10 border-t border-line" />
         </div>
-      </main>
-    </div>
+
+        <label className="block space-y-1.5">
+          <span className="text-xs font-semibold text-mint">部屋コード</span>
+          <input
+            className="w-full rounded-xl border border-line bg-background px-3 py-2.5 uppercase tracking-widest text-foreground outline-none focus:border-accent"
+            value={joinCode}
+            onChange={(e) => setJoinCode(e.target.value)}
+            placeholder="AB3K9"
+            maxLength={8}
+          />
+        </label>
+
+        <button
+          type="button"
+          disabled={busy}
+          onClick={joinRoom}
+          className="w-full rounded-xl border border-line px-4 py-3 text-sm font-semibold text-foreground disabled:opacity-50"
+        >
+          コードで入室
+        </button>
+
+        {error && <p className="text-sm text-[#f0a0a0]">{error}</p>}
+      </div>
+    </main>
   );
 }

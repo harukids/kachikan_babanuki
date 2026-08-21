@@ -1,0 +1,460 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { getCard, PILLAR_LABEL } from "@/lib/deck";
+import {
+  confirmSteal,
+  discardCard,
+  gainCard,
+  nextSeatId,
+  selectStealCard,
+  skipTurn,
+} from "@/lib/game-actions";
+import { createBrowserClient } from "@/lib/supabase/client";
+import { MAX_DENY, type Player, type Room } from "@/lib/types";
+
+type Props = {
+  room: Room;
+  players: Player[];
+  me: Player;
+  onChanged: () => Promise<void>;
+};
+
+export function PlayingView({ room, players, me, onChanged }: Props) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [fieldQuery, setFieldQuery] = useState("");
+  const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
+
+  const byId = useMemo(() => {
+    const map = new Map(players.map((p) => [p.id, p]));
+    return map;
+  }, [players]);
+
+  const current = room.current_player_id
+    ? byId.get(room.current_player_id)
+    : undefined;
+  const victimId = room.current_player_id
+    ? nextSeatId(room.seat_order, room.current_player_id)
+    : null;
+  const victim = victimId ? byId.get(victimId) : undefined;
+
+  const sorted = useMemo(() => {
+    return [...players].sort((a, b) => {
+      const ai = room.seat_order.indexOf(a.id);
+      const bi = room.seat_order.indexOf(b.id);
+      return ai - bi;
+    });
+  }, [players, room.seat_order]);
+
+  const fieldCards = useMemo(() => {
+    const q = fieldQuery.trim();
+    return room.field
+      .map((id) => getCard(id))
+      .filter((c): c is NonNullable<typeof c> => Boolean(c))
+      .filter((c) => !q || c.label.includes(q));
+  }, [room.field, fieldQuery]);
+
+  async function run(action: () => Promise<void>) {
+    setBusy(true);
+    setError(null);
+    try {
+      await action();
+      await onChanged();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "操作に失敗しました");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const subLabel =
+    room.sub_state === "STEAL_SELECT"
+      ? `${current?.display_name ?? "手番者"}が隣から1枚選ぶ`
+      : room.sub_state === "STEAL_CONFIRM"
+        ? `${victim?.display_name ?? "隣"}が OK / ダメ を選ぶ`
+        : room.sub_state === "DISCARD"
+          ? `${current?.display_name ?? "手番者"}が1枚捨てる`
+          : room.sub_state === "GAIN"
+            ? `${victim?.display_name ?? "隣"}が場から1枚得る`
+            : room.sub_state;
+
+  return (
+    <div className="space-y-4">
+      <section className="rounded-2xl border border-line bg-panel p-4 space-y-3">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <p className="text-xs font-semibold text-mint">プレイ中</p>
+            <p className="text-sm text-muted mt-1">
+              ターン進行: 各人{" "}
+              {sorted.map((p) => `${p.display_name}${p.turns_completed}`).join(" / ")} /5
+            </p>
+            <p className="mt-2 text-sm font-semibold text-foreground">
+              いま: {subLabel}
+            </p>
+            <p className="text-xs text-muted mt-1">
+              ダメ使用: {room.deny_count} / {MAX_DENY}
+            </p>
+          </div>
+          {me.is_host && (
+            <button
+              type="button"
+              disabled={busy}
+              className="rounded-xl border border-line px-3 py-2 text-sm text-[#f0a0a0]"
+              onClick={() =>
+                void run(async () => {
+                  const supabase = createBrowserClient();
+                  await skipTurn({
+                    supabase,
+                    room,
+                    players,
+                    actorId: me.id,
+                  });
+                })
+              }
+            >
+              手番スキップ
+            </button>
+          )}
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {sorted.map((p) => (
+            <span
+              key={p.id}
+              className={`rounded-full px-3 py-1 text-xs ${
+                p.id === room.current_player_id
+                  ? "bg-accent text-[#1c2421] font-semibold"
+                  : p.id === victimId && room.sub_state === "STEAL_CONFIRM"
+                    ? "card-targeted border border-accent bg-background font-semibold text-accent"
+                    : "bg-background border border-line"
+              }`}
+            >
+              {p.display_name}
+              {p.id === me.id ? "（あなた）" : ""} · 手札{p.hand.length}
+              {p.id === victimId && room.sub_state === "STEAL_CONFIRM"
+                ? " · 選択中"
+                : ""}
+            </span>
+          ))}
+        </div>
+      </section>
+
+      {/* 選ばれた手札の強調（確認フェーズ） */}
+      {room.sub_state === "STEAL_CONFIRM" && victim && (
+        <section className="rounded-2xl border-2 border-accent bg-panel p-4 space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold text-accent">
+              {victimId === me.id
+                ? "あなたの手札が選ばれています"
+                : `${victim.display_name} の手札が選ばれています`}
+            </h2>
+            <p className="mt-1 text-sm text-muted">
+              {current?.display_name}{" "}
+              が選んだ札は、点滅・縁取りされているカードです。
+            </p>
+          </div>
+
+          <div className="flex flex-wrap justify-center gap-3 rounded-xl bg-background/60 p-4">
+            {victim.hand.map((id, index) => {
+              const card = getCard(id);
+              const isPending = room.pending_card_id === id;
+              const denied = (room.denied_card_ids ?? []).includes(id);
+              const reveal = victimId === me.id;
+              return (
+                <div
+                  key={`confirm-${id}-${index}`}
+                  className={`relative flex h-[100px] w-[76px] flex-col items-center justify-center rounded-xl border-2 text-center ${
+                    isPending
+                      ? "card-targeted border-accent bg-[#fff4ef]"
+                      : denied
+                        ? "border-line bg-[#eef2f0] opacity-40"
+                        : "border-line bg-white"
+                  }`}
+                >
+                  {isPending && (
+                    <span className="card-targeted-label absolute -top-2 rounded-full bg-accent px-2 py-0.5 text-[10px] text-[#16382f]">
+                      これ
+                    </span>
+                  )}
+                  {reveal ? (
+                    <>
+                      <span
+                        className={`text-base font-bold ${isPending ? "text-accent" : ""}`}
+                      >
+                        {card?.label ?? "?"}
+                      </span>
+                      <span className="mt-1 text-[10px] text-muted">
+                        {card ? PILLAR_LABEL[card.pillar] : ""}
+                      </span>
+                    </>
+                  ) : (
+                    <span
+                      className={`text-lg ${isPending ? "text-accent" : "text-muted"}`}
+                    >
+                      {denied ? "×" : "?"}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {victimId === me.id ? (
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={busy}
+                className="rounded-xl bg-mint px-4 py-2 text-sm font-bold text-white"
+                onClick={() =>
+                  void run(async () => {
+                    const supabase = createBrowserClient();
+                    await confirmSteal({
+                      supabase,
+                      room,
+                      players,
+                      actorId: me.id,
+                      accept: true,
+                    });
+                  })
+                }
+              >
+                OK（渡す）
+              </button>
+              <button
+                type="button"
+                disabled={busy || room.deny_count >= MAX_DENY}
+                className="rounded-xl border border-line px-4 py-2 text-sm disabled:opacity-40"
+                onClick={() =>
+                  void run(async () => {
+                    const supabase = createBrowserClient();
+                    await confirmSteal({
+                      supabase,
+                      room,
+                      players,
+                      actorId: me.id,
+                      accept: false,
+                    });
+                  })
+                }
+              >
+                ダメ（残り {Math.max(0, MAX_DENY - room.deny_count)} 回）
+              </button>
+            </div>
+          ) : (
+            <p className="text-center text-sm text-muted">
+              {victim.display_name} が OK / ダメ を選ぶまで待ってください
+            </p>
+          )}
+        </section>
+      )}
+
+      {/* 自分の手札 */}
+      <section
+        className={`rounded-2xl bg-panel p-4 space-y-3 ${
+          room.sub_state === "DISCARD" && room.current_player_id === me.id
+            ? "border-2 border-accent shadow-[0_0_0_1px_rgba(255,143,107,0.35)]"
+            : room.sub_state === "STEAL_CONFIRM" && victimId === me.id
+              ? "border-2 border-accent/70"
+              : "border border-line"
+        }`}
+      >
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-sm font-semibold text-accent">あなたの手札</h2>
+          {room.sub_state === "DISCARD" && room.current_player_id === me.id && (
+            <span className="card-targeted-label rounded-full bg-accent px-2.5 py-0.5 text-[11px] font-semibold text-[#16382f]">
+              ここで1枚選んで捨てる
+            </span>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {me.hand.map((id) => {
+            const card = getCard(id);
+            const canDiscard =
+              room.sub_state === "DISCARD" && room.current_player_id === me.id;
+            const isTargeted =
+              room.sub_state === "STEAL_CONFIRM" &&
+              victimId === me.id &&
+              room.pending_card_id === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                disabled={busy || !canDiscard}
+                onClick={() =>
+                  void run(async () => {
+                    const supabase = createBrowserClient();
+                    await discardCard({
+                      supabase,
+                      room,
+                      players,
+                      actorId: me.id,
+                      cardId: id,
+                    });
+                  })
+                }
+                className={`relative min-w-[88px] rounded-xl border bg-white px-3 py-4 text-center shadow-sm disabled:opacity-60 ${
+                  isTargeted ? "card-targeted border-accent" : "border-line"
+                }`}
+              >
+                {isTargeted && (
+                  <span className="card-targeted-label absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-accent px-2 py-0.5 text-[10px] text-[#16382f]">
+                    選択中
+                  </span>
+                )}
+                <div className={`font-bold ${isTargeted ? "text-accent" : ""}`}>
+                  {card?.label ?? id}
+                </div>
+                <div className="mt-1 text-[10px] text-muted">
+                  {card ? PILLAR_LABEL[card.pillar] : ""}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        {room.sub_state === "DISCARD" && room.current_player_id === me.id && (
+          <p className="text-xs text-mint">
+            捨てるカードをタップしてください（Zoomでも声に出してOK）
+          </p>
+        )}
+        {room.sub_state === "STEAL_CONFIRM" && victimId === me.id && (
+          <p className="text-xs text-accent">
+            点滅しているカードが、相手に選ばれています。
+          </p>
+        )}
+      </section>
+
+      {/* 隣から奪う */}
+      {room.sub_state === "STEAL_SELECT" &&
+        room.current_player_id === me.id &&
+        victim && (
+          <section className="rounded-2xl border-2 border-accent bg-panel p-4 space-y-3 shadow-[0_0_0_1px_rgba(255,143,107,0.35)]">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-sm font-semibold text-accent">
+                {victim.display_name} の手札（裏）から1枚選ぶ
+              </h2>
+              <span className="card-targeted-label rounded-full bg-accent px-2.5 py-0.5 text-[11px] font-semibold text-[#16382f]">
+                ここで選ぶ
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-2 rounded-xl border border-accent/40 bg-[#f7fffb] p-3">
+              {victim.hand.map((id, index) => {
+                const denied = (room.denied_card_ids ?? []).includes(id);
+                return (
+                  <button
+                    key={`${id}-${index}`}
+                    type="button"
+                    disabled={busy || denied}
+                    title={denied ? "この手番ですでにダメされたカード" : undefined}
+                    onClick={() =>
+                      void run(async () => {
+                        const supabase = createBrowserClient();
+                        await selectStealCard({
+                          supabase,
+                          room,
+                          players,
+                          actorId: me.id,
+                          cardId: id,
+                        });
+                      })
+                    }
+                    className={`h-[72px] w-[56px] rounded-lg border text-xs transition ${
+                      denied
+                        ? "cursor-not-allowed border-line bg-[#e8eeeb] text-[#8aa099] opacity-50"
+                        : "border-accent/40 bg-[#dff5ec] text-mint hover:border-accent hover:bg-[#c8f0e0]"
+                    }`}
+                  >
+                    {denied ? "×" : "?"}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-xs text-muted">
+              中身は見えません。「ダメ」された札は ×
+              になり、同じ手番では再選択できません。
+            </p>
+          </section>
+        )}
+
+      {/* 場から得る */}
+      <section
+        className={`rounded-2xl bg-panel p-4 space-y-3 ${
+          room.sub_state === "GAIN" && victimId === me.id
+            ? "border-2 border-accent shadow-[0_0_0_1px_rgba(255,143,107,0.35)]"
+            : "border border-line"
+        }`}
+      >
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-sm font-semibold text-accent">
+            場のカード（{room.field.length}枚）
+          </h2>
+          {room.sub_state === "GAIN" && victimId === me.id && (
+            <span className="card-targeted-label rounded-full bg-accent px-2.5 py-0.5 text-[11px] font-semibold text-[#16382f]">
+              ここで1枚選んで得る
+            </span>
+          )}
+        </div>
+        <input
+          className="w-full rounded-xl border border-line bg-background px-3 py-2 text-sm outline-none focus:border-accent"
+          placeholder="検索（例: 自由）"
+          value={fieldQuery}
+          onChange={(e) => setFieldQuery(e.target.value)}
+        />
+        <div
+          className={`grid max-h-56 grid-cols-3 gap-2 overflow-auto rounded-xl p-2 sm:grid-cols-4 ${
+            room.sub_state === "GAIN" && victimId === me.id
+              ? "border border-accent/40 bg-background/50"
+              : ""
+          }`}
+        >
+          {fieldCards.map((card) => {
+            const canGain = room.sub_state === "GAIN" && victimId === me.id;
+            const selected = selectedFieldId === card.id;
+            return (
+              <button
+                key={card.id}
+                type="button"
+                disabled={busy || !canGain}
+                onClick={() => setSelectedFieldId(card.id)}
+                className={`rounded-xl border px-2 py-3 text-sm font-semibold disabled:opacity-50 ${
+                  selected
+                    ? "card-targeted border-accent text-accent"
+                    : canGain
+                      ? "border-accent/40 bg-background hover:border-accent"
+                      : "border-line bg-background"
+                }`}
+              >
+                {card.label}
+              </button>
+            );
+          })}
+        </div>
+        {room.sub_state === "GAIN" && victimId === me.id && (
+          <button
+            type="button"
+            disabled={busy || !selectedFieldId}
+            className="rounded-xl bg-accent px-4 py-2 text-sm font-bold text-[#16382f] disabled:opacity-40"
+            onClick={() =>
+              void run(async () => {
+                if (!selectedFieldId) return;
+                const supabase = createBrowserClient();
+                await gainCard({
+                  supabase,
+                  room,
+                  players,
+                  actorId: me.id,
+                  cardId: selectedFieldId,
+                });
+                setSelectedFieldId(null);
+              })
+            }
+          >
+            このカードを得る
+          </button>
+        )}
+      </section>
+
+      {error && <p className="text-sm text-[#f0a0a0]">{error}</p>}
+    </div>
+  );
+}

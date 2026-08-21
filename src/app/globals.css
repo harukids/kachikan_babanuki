@@ -1,26 +1,75 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f3fbf8;
+  --foreground: #16382f;
+  --panel: #ffffff;
+  --muted: #5a7a72;
+  --accent: #ff8f6b;
+  --mint: #2a8f78;
+  --line: rgba(22, 56, 47, 0.12);
+  --ink-on-accent: #16382f;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --color-panel: var(--panel);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-mint: var(--mint);
+  --color-line: var(--line);
+  --font-sans: var(--font-zen);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+body {
+  background:
+    radial-gradient(ellipse 80% 50% at 100% -10%, rgba(255, 143, 107, 0.18), transparent 55%),
+    radial-gradient(ellipse 70% 45% at -10% 100%, rgba(42, 143, 120, 0.16), transparent 50%),
+    linear-gradient(165deg, #eefcf7 0%, #f7fffb 45%, #eef5ff 100%);
+  color: var(--foreground);
+  font-family: var(--font-zen), "Hiragino Sans", sans-serif;
+  min-height: 100%;
+}
+
+@keyframes kachikan-pulse-ring {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px var(--accent), 0 0 14px rgba(255, 143, 107, 0.35);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 4px var(--accent), 0 0 24px rgba(255, 143, 107, 0.55);
+    transform: scale(1.03);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes kachikan-pulse-opacity {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.75;
+  }
+}
+
+.card-targeted {
+  animation: kachikan-pulse-ring 1.1s ease-in-out infinite;
+  border-color: var(--accent) !important;
+  z-index: 1;
+}
+
+.card-targeted-label {
+  animation: kachikan-pulse-opacity 1.1s ease-in-out infinite;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.panel-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  box-shadow: 0 10px 30px rgba(22, 56, 47, 0.06);
 }
