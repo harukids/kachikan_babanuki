@@ -400,7 +400,7 @@ export async function renderResultPoster(
   ctx.fillStyle = theme.footer;
   ctx.font = "500 22px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
   const date = new Date().toLocaleDateString("ja-JP");
-  ctx.fillText(`価値観ババ抜き ／ ${date}`, width / 2, 1280);
+  ctx.fillText(date, width / 2, 1280);
 
   return canvas;
 }
