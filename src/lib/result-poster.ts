@@ -439,11 +439,7 @@ export async function renderResultPoster(
   if (handLabels.length > 0) {
     ctx.fillStyle = theme.footer;
     ctx.font = "500 18px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
-    ctx.fillText(
-      `最終5枚  ${handLabels.join("  ·  ")}`,
-      width / 2,
-      reasonTop + reasonH + 34,
-    );
+    ctx.fillText(handLabels.join("  ·  "), width / 2, reasonTop + reasonH + 34);
   }
 
   ctx.fillStyle = theme.footer;
