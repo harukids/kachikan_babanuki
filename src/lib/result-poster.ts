@@ -195,6 +195,32 @@ function wrapText(
   return lines;
 }
 
+/** 理由文が枠に収まるフォントサイズを探す（足りるときは縮小しない） */
+function fitWrappedText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+  maxHeight: number,
+  baseSize: number,
+  minSize: number,
+): { lines: string[]; size: number; lineHeight: number } {
+  let size = baseSize;
+  while (size >= minSize) {
+    ctx.font = `500 ${size}px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif`;
+    const lineHeight = Math.round(size * 1.35);
+    const lines = wrapText(ctx, text, maxWidth);
+    if (lines.length * lineHeight <= maxHeight) {
+      return { lines, size, lineHeight };
+    }
+    size -= 2;
+  }
+  ctx.font = `500 ${minSize}px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif`;
+  const lineHeight = Math.round(minSize * 1.35);
+  const lines = wrapText(ctx, text, maxWidth);
+  const maxLines = Math.max(1, Math.floor(maxHeight / lineHeight));
+  return { lines: lines.slice(0, maxLines), size: minSize, lineHeight };
+}
+
 function loadImage(src: string): Promise<HTMLImageElement | null> {
   return new Promise((resolve) => {
     const img = new Image();
@@ -388,14 +414,19 @@ export async function renderResultPoster(
   ctx.font = "700 24px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
   ctx.fillText("なぜ、これを大切にするのか", width / 2, reasonTop + 48);
 
+  const reasonTextTop = reasonTop + 78;
+  const reasonTextBottomPad = 28;
+  const reasonMaxH = Math.max(40, reasonH - (reasonTextTop - reasonTop) - reasonTextBottomPad);
+  const reasonMaxW = width - 320;
   ctx.fillStyle = "#eef2ff";
-  ctx.font = "500 30px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
-  const lines = wrapText(ctx, reason, width - 320);
-  const startReasonY = reasonTop + 100;
-  const maxReasonLines = Math.max(3, Math.floor((reasonH - 120) / 40));
-  lines.slice(0, maxReasonLines).forEach((line, i) => {
-    ctx.fillText(line, width / 2, startReasonY + i * 40);
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  const fitted = fitWrappedText(ctx, reason, reasonMaxW, reasonMaxH, 30, 16);
+  ctx.font = `500 ${fitted.size}px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif`;
+  fitted.lines.forEach((line, i) => {
+    ctx.fillText(line, width / 2, reasonTextTop + i * fitted.lineHeight);
   });
+  ctx.textBaseline = "alphabetic";
 
   ctx.fillStyle = theme.footer;
   ctx.font = "500 22px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
