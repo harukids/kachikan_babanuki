@@ -268,13 +268,13 @@ export async function renderResultPoster(
   ctx.fillStyle = band;
   ctx.fillRect(0, 0, width, height);
 
-  // 白線イラスト — メイン語の下〜サブ上あたり（上部より下げ、中央密集よりは上）
+  // 白線イラスト — 「名前」と「メイン語」のあいだの空きに置く（タイトル／名前には重ねない）
   if (input.mainCardId) {
     const art = await loadLineArt(input.mainCardId, pillar);
     if (art) {
-      const artSize = 400;
+      const artSize = 280;
       const ax = (width - artSize) / 2;
-      const ay = 500;
+      const ay = 235;
       ctx.save();
       ctx.globalAlpha = 0.36;
       ctx.drawImage(art, ax, ay, artSize, artSize);
@@ -302,15 +302,15 @@ export async function renderResultPoster(
 
   ctx.fillStyle = theme.title;
   ctx.font = "600 34px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
-  ctx.fillText("わたしの価値観", width / 2, 170);
+  ctx.fillText("わたしの価値観", width / 2, 155);
 
   ctx.fillStyle = theme.name;
   ctx.font = "500 28px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
-  ctx.fillText(input.displayName, width / 2, 220);
+  ctx.fillText(input.displayName, width / 2, 200);
 
-  // メイン語 — 下線は文字サイズに追従
+  // メイン語 — 名前とのあいだを空け、下線は文字サイズに追従
   const mainLabel = main?.label ?? "—";
-  const mainCy = 400;
+  const mainCy = 555;
   ctx.fillStyle = theme.mainLabel;
   const { size: mainSize, width: mainTextW } = fitCenterText(
     ctx,
@@ -345,7 +345,7 @@ export async function renderResultPoster(
   ctx.font = "600 22px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
   ctx.fillText("MAIN VALUE", width / 2, underlineY + 42);
 
-  const subY = Math.max(600, underlineY + 90);
+  const subY = Math.max(740, underlineY + 88);
   const boxW = 360;
   const gap = 40;
   const startX = (width - (boxW * 2 + gap)) / 2;
@@ -373,26 +373,28 @@ export async function renderResultPoster(
     ctx.textBaseline = "alphabetic";
   });
 
-  const reasonTop = subY + 180;
+  const reasonTop = Math.min(subY + 170, 920);
   const reason = (input.reason ?? "").trim() || "（理由未入力）";
+  const reasonH = Math.min(260, 1260 - reasonTop);
   ctx.fillStyle = "rgba(10, 12, 28, 0.55)";
-  roundRect(ctx, 120, reasonTop, width - 240, 280, 28);
+  roundRect(ctx, 120, reasonTop, width - 240, reasonH, 28);
   ctx.fill();
   ctx.strokeStyle = theme.reasonStroke;
   ctx.lineWidth = 2;
-  roundRect(ctx, 120, reasonTop, width - 240, 280, 28);
+  roundRect(ctx, 120, reasonTop, width - 240, reasonH, 28);
   ctx.stroke();
 
   ctx.fillStyle = theme.reasonTitle;
   ctx.font = "700 24px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
-  ctx.fillText("なぜ、これを大切にするのか", width / 2, reasonTop + 50);
+  ctx.fillText("なぜ、これを大切にするのか", width / 2, reasonTop + 48);
 
   ctx.fillStyle = "#eef2ff";
-  ctx.font = "500 32px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
+  ctx.font = "500 30px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
   const lines = wrapText(ctx, reason, width - 320);
-  const startReasonY = reasonTop + 110;
-  lines.slice(0, 5).forEach((line, i) => {
-    ctx.fillText(line, width / 2, startReasonY + i * 44);
+  const startReasonY = reasonTop + 100;
+  const maxReasonLines = Math.max(3, Math.floor((reasonH - 120) / 40));
+  lines.slice(0, maxReasonLines).forEach((line, i) => {
+    ctx.fillText(line, width / 2, startReasonY + i * 40);
   });
 
   ctx.fillStyle = theme.footer;
