@@ -5,6 +5,7 @@ import { useState } from "react";
 import { generateRoomCode, normalizeRoomCode } from "@/lib/room-code";
 import { isSupabaseConfigured, createBrowserClient } from "@/lib/supabase/client";
 import { savePlayerId } from "@/lib/player-storage";
+import { joinRoomAsGuest } from "@/lib/join-room";
 import { DECK } from "@/lib/deck";
 
 export default function HomePage() {
@@ -60,7 +61,6 @@ export default function HomePage() {
   async function joinRoom() {
     setError(null);
     const code = normalizeRoomCode(joinCode);
-    const displayName = name.trim() || "ゲスト";
     if (!code) {
       setError("部屋コードを入力してください");
       return;
@@ -72,40 +72,7 @@ export default function HomePage() {
     setBusy(true);
     try {
       const supabase = createBrowserClient();
-      const { data: room, error: roomError } = await supabase
-        .from("rooms")
-        .select("code, phase")
-        .eq("code", code)
-        .maybeSingle();
-      if (roomError) throw roomError;
-      if (!room) throw new Error("部屋が見つかりません");
-      if (room.phase !== "LOBBY") {
-        throw new Error("この部屋はすでに開始済みです");
-      }
-
-      const playerId = crypto.randomUUID();
-      const { data: playersNow } = await supabase
-        .from("players")
-        .select("id")
-        .eq("room_code", code);
-      if ((playersNow?.length ?? 0) >= 8) {
-        throw new Error("この部屋は満員です（上限8人）");
-      }
-
-      const { error: playerError } = await supabase.from("players").insert({
-        id: playerId,
-        room_code: code,
-        display_name: displayName,
-        seat_index: playersNow?.length ?? 0,
-        is_host: false,
-        hand: [],
-      });
-      if (playerError) throw playerError;
-
-      const seatOrder = [...(playersNow?.map((p) => p.id) ?? []), playerId];
-      await supabase.from("rooms").update({ seat_order: seatOrder }).eq("code", code);
-
-      savePlayerId(code, playerId);
+      await joinRoomAsGuest(supabase, code, name);
       router.push(`/room/${code}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "入室できませんでした");

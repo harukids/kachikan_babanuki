@@ -4,7 +4,8 @@ import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { createBrowserClient, isSupabaseConfigured } from "@/lib/supabase/client";
-import { loadPlayerId } from "@/lib/player-storage";
+import { clearPlayerId, loadPlayerId } from "@/lib/player-storage";
+import { joinRoomAsGuest } from "@/lib/join-room";
 import { startAndDeal } from "@/lib/game-actions";
 import { PlayingView } from "@/components/PlayingView";
 import { EndgameView } from "@/components/EndgameView";
@@ -22,9 +23,11 @@ export default function RoomPage() {
   const [room, setRoom] = useState<Room | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [playerId, setPlayerId] = useState<string | null>(null);
+  const [joinName, setJoinName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState<"link" | "code" | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
   async function copyText(kind: "link" | "code", text: string) {
     try {
@@ -57,11 +60,20 @@ export default function RoomPage() {
     if (playerError) throw playerError;
     setRoom(roomData as Room | null);
     setPlayers((playerData as Player[]) ?? []);
+    setLoaded(true);
   }, [code]);
 
   useEffect(() => {
     setPlayerId(loadPlayerId(code));
   }, [code]);
+
+  // 保存された playerId が部屋にいない（別端末の残骸など）ならクリア
+  useEffect(() => {
+    if (!loaded || !playerId) return;
+    if (players.some((p) => p.id === playerId)) return;
+    clearPlayerId(code);
+    setPlayerId(null);
+  }, [loaded, players, playerId, code]);
 
   useEffect(() => {
     if (!isSupabaseConfigured()) {
@@ -75,6 +87,7 @@ export default function RoomPage() {
       } catch (e) {
         if (!cancelled) {
           setError(e instanceof Error ? e.message : "読み込みに失敗しました");
+          setLoaded(true);
         }
       }
     })();
@@ -108,6 +121,22 @@ export default function RoomPage() {
       void supabase.removeChannel(channel);
     };
   }, [code, refresh]);
+
+  async function joinFromInvite() {
+    if (!room || room.phase !== "LOBBY") return;
+    setBusy(true);
+    setError(null);
+    try {
+      const supabase = createBrowserClient();
+      const id = await joinRoomAsGuest(supabase, code, joinName);
+      setPlayerId(id);
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "入室できませんでした");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function moveSeat(fromIndex: number, direction: -1 | 1) {
     if (!me?.is_host || !room || room.phase !== "LOBBY") return;
@@ -193,6 +222,57 @@ export default function RoomPage() {
       <main className="mx-auto max-w-lg space-y-4 p-8">
         <p className="text-[#f0a0a0]">{error ?? "部屋がありません"}</p>
         <Link href="/" className="text-mint underline">
+          トップへ
+        </Link>
+      </main>
+    );
+  }
+
+  // 招待リンク直開き：まだ参加者でない場合は名前入力
+  if (loaded && room.phase === "LOBBY" && !me) {
+    return (
+      <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center gap-6 px-4 py-12">
+        <header className="space-y-2">
+          <p className="text-xs font-semibold tracking-wide text-mint">部屋 {code}</p>
+          <h1 className="text-2xl font-bold">参加する</h1>
+          <p className="text-sm text-muted">
+            表示名を入れて入室してください。いま {players.length} / {MAX_PLAYERS} 人です。
+          </p>
+        </header>
+
+        <label className="block space-y-1">
+          <span className="text-sm text-muted">表示名</span>
+          <input
+            className="w-full rounded-xl border border-line bg-panel px-3 py-2 outline-none focus:border-accent"
+            value={joinName}
+            onChange={(e) => setJoinName(e.target.value)}
+            placeholder="例: はるき"
+            maxLength={24}
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void joinFromInvite();
+            }}
+          />
+        </label>
+
+        <button
+          type="button"
+          disabled={busy || players.length >= MAX_PLAYERS}
+          onClick={() => void joinFromInvite()}
+          className="rounded-xl bg-gradient-to-r from-[#6ea8ff] via-[#ff8ec8] to-[#ffb086] px-4 py-3 text-sm font-bold text-[#12122a] disabled:opacity-40"
+        >
+          この部屋に入る
+        </button>
+
+        {players.length > 0 && (
+          <p className="text-sm text-muted">
+            参加中: {players.map((p) => p.display_name).join("、")}
+          </p>
+        )}
+
+        {error && <p className="text-sm text-[#f0a0a0]">{error}</p>}
+
+        <Link href="/" className="text-sm text-mint underline">
           トップへ
         </Link>
       </main>
