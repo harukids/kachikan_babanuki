@@ -1,5 +1,5 @@
 import { PILLAR_LABEL } from "@/lib/deck";
-import { resolveValueCardIds, type TeamSnapshot } from "@/lib/team-report";
+import { resolveMainAndSubCardIds, type TeamSnapshot } from "@/lib/team-report";
 import type { Pillar } from "@/lib/types";
 
 const PILLAR_COLORS: Record<Pillar, string> = {
@@ -47,31 +47,46 @@ export async function downloadTeamReportImage(input: {
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, width, height);
 
-  // メンバーのメイン＋サブ線画を全体背景に
-  const artIds = resolveValueCardIds(input.snapshot).slice(0, 15);
-  const fullLayouts = [
-    { x: 40, y: 80, s: 160, r: -20 },
-    { x: 880, y: 60, s: 150, r: 16 },
-    { x: 20, y: 280, s: 130, r: 24 },
-    { x: 900, y: 260, s: 140, r: -14 },
-    { x: 60, y: 480, s: 120, r: -28 },
-    { x: 880, y: 500, s: 135, r: 18 },
-    { x: 30, y: 700, s: 145, r: 12 },
-    { x: 890, y: 680, s: 155, r: -22 },
-    { x: 80, y: 920, s: 125, r: -10 },
-    { x: 860, y: 940, s: 130, r: 26 },
-    { x: 420, y: 100, s: 110, r: 6 },
-    { x: 400, y: 420, s: 100, r: -18 },
-    { x: 430, y: 780, s: 115, r: 14 },
-    { x: 200, y: 1100, s: 120, r: 8 },
-    { x: 720, y: 1120, s: 130, r: -16 },
+  // メインは存在感強め、サブは装飾
+  const { mains, subs } = resolveMainAndSubCardIds(input.snapshot);
+  const mainLayouts = [
+    { x: 340, y: 160, s: 380, r: -8 },
+    { x: 40, y: 420, s: 340, r: 14 },
+    { x: 680, y: 400, s: 360, r: -16 },
+    { x: 200, y: 780, s: 320, r: 10 },
+    { x: 620, y: 760, s: 330, r: -12 },
+    { x: 360, y: 980, s: 300, r: 6 },
   ];
-  for (let i = 0; i < artIds.length; i++) {
-    const img = await loadImage(`/illustrations/v3/${artIds[i]}.svg?v=20260822g`);
+  const subLayouts = [
+    { x: 20, y: 60, s: 110, r: -22 },
+    { x: 920, y: 80, s: 100, r: 18 },
+    { x: 30, y: 280, s: 95, r: 26 },
+    { x: 940, y: 300, s: 105, r: -14 },
+    { x: 10, y: 620, s: 100, r: -20 },
+    { x: 950, y: 640, s: 95, r: 22 },
+    { x: 40, y: 980, s: 90, r: 12 },
+    { x: 930, y: 1000, s: 100, r: -18 },
+    { x: 480, y: 40, s: 85, r: 8 },
+    { x: 500, y: 1180, s: 90, r: -10 },
+  ];
+
+  for (let i = 0; i < Math.min(mains.length, mainLayouts.length); i++) {
+    const img = await loadImage(`/illustrations/v3/${mains[i]}.svg?v=20260822h`);
     if (!img) continue;
-    const L = fullLayouts[i % fullLayouts.length];
+    const L = mainLayouts[i];
     ctx.save();
-    ctx.globalAlpha = 0.13;
+    ctx.globalAlpha = 0.3;
+    ctx.translate(L.x + L.s / 2, L.y + L.s / 2);
+    ctx.rotate((L.r * Math.PI) / 180);
+    ctx.drawImage(img, -L.s / 2, -L.s / 2, L.s, L.s);
+    ctx.restore();
+  }
+  for (let i = 0; i < Math.min(subs.length, subLayouts.length); i++) {
+    const img = await loadImage(`/illustrations/v3/${subs[i]}.svg?v=20260822h`);
+    if (!img) continue;
+    const L = subLayouts[i];
+    ctx.save();
+    ctx.globalAlpha = 0.1;
     ctx.translate(L.x + L.s / 2, L.y + L.s / 2);
     ctx.rotate((L.r * Math.PI) / 180);
     ctx.drawImage(img, -L.s / 2, -L.s / 2, L.s, L.s);

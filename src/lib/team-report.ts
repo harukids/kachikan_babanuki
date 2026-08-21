@@ -28,37 +28,53 @@ export function emptyPillarCounts(): Record<Pillar, number> {
 
 /** スナップショットから価値観カードIDを復元（メイン＋サブ） */
 export function resolveValueCardIds(snapshot: TeamSnapshot): string[] {
-  const ids: string[] = [];
-  const seen = new Set<string>();
+  const { mains, subs } = resolveMainAndSubCardIds(snapshot);
+  return [...mains, ...subs];
+}
 
-  const push = (id: string | null | undefined) => {
-    if (!id || seen.has(id)) return;
-    seen.add(id);
-    ids.push(id);
+export function resolveMainAndSubCardIds(snapshot: TeamSnapshot): {
+  mains: string[];
+  subs: string[];
+} {
+  const mains: string[] = [];
+  const subs: string[] = [];
+  const seenMain = new Set<string>();
+  const seenSub = new Set<string>();
+
+  const pushMain = (id: string | null | undefined) => {
+    if (!id || seenMain.has(id)) return;
+    seenMain.add(id);
+    mains.push(id);
+  };
+  const pushSub = (id: string | null | undefined) => {
+    if (!id || seenMain.has(id) || seenSub.has(id)) return;
+    seenSub.add(id);
+    subs.push(id);
   };
 
   for (const m of snapshot.members) {
-    push(m.mainCardId ?? undefined);
-    for (const sid of m.subCardIds ?? []) push(sid);
-
-    // 旧データ互換: IDが無い場合はラベルから推定
-    if (!m.mainCardId && m.mainLabel) {
+    if (m.mainCardId) {
+      pushMain(m.mainCardId);
+    } else if (m.mainLabel) {
       const hit = DECK.find((c) => c.label === m.mainLabel);
-      if (hit) push(hit.id);
+      if (hit) pushMain(hit.id);
     }
-    if ((!m.subCardIds || m.subCardIds.length === 0) && m.subLabels?.length) {
+
+    if (m.subCardIds && m.subCardIds.length > 0) {
+      for (const sid of m.subCardIds) pushSub(sid);
+    } else if (m.subLabels?.length) {
       for (const label of m.subLabels) {
         const hit = DECK.find((c) => c.label === label);
-        if (hit) push(hit.id);
+        if (hit) pushSub(hit.id);
       }
     }
   }
-  return ids;
+  return { mains, subs };
 }
 
 /** @deprecated use resolveValueCardIds */
 export function resolveMainCardIds(snapshot: TeamSnapshot): string[] {
-  return resolveValueCardIds(snapshot);
+  return resolveMainAndSubCardIds(snapshot).mains;
 }
 
 export function buildTeamSnapshot(
