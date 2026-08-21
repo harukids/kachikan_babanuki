@@ -60,6 +60,7 @@ export async function startAndDeal(
           main_card_id: null,
           sub_card_ids: [],
           reason: null,
+          statement: null,
           ready_selecting: false,
           ready_writing: false,
         })
@@ -376,6 +377,25 @@ export async function closeRoom({
   if (error) throw error;
 }
 
+export async function saveStatement({
+  supabase,
+  actorId,
+  statement,
+}: {
+  supabase: SupabaseClient;
+  actorId: string;
+  statement: string;
+}) {
+  const trimmed = statement.trim();
+  if (!trimmed) throw new Error("ステートメントが空です");
+  if (trimmed.length > 500) throw new Error("ステートメントが長すぎます");
+  const { error } = await supabase
+    .from("players")
+    .update({ statement: trimmed })
+    .eq("id", actorId);
+  if (error) throw error;
+}
+
 export function formatResultsText(players: Player[]): string {
   const lines = ["Value Drop 結果", ""];
   for (const p of players) {
@@ -393,6 +413,7 @@ export function formatResultsText(players: Player[]): string {
     lines.push(`メイン: ${main}`);
     lines.push(`サブ: ${subs || "未設定"}`);
     lines.push(`理由: ${p.reason ?? ""}`);
+    if (p.statement) lines.push(`ステートメント: ${p.statement}`);
     lines.push("");
   }
   return lines.join("\n");

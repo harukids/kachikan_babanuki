@@ -27,11 +27,15 @@ create table if not exists players (
   main_card_id text,
   sub_card_ids text[] not null default '{}',
   reason text,
+  statement text,
   ready_selecting boolean not null default false,
   ready_writing boolean not null default false,
   is_host boolean not null default false,
   created_at timestamptz not null default now()
 );
+
+-- 既存DB向け（何度実行してもOK）
+alter table players add column if not exists statement text;
 
 create index if not exists players_room_code_idx on players(room_code);
 

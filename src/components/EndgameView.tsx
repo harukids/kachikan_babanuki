@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getCard, PILLAR_LABEL } from "@/lib/deck";
 import {
   closeRoom,
   formatResultsText,
+  saveStatement,
   submitReason,
   submitSelection,
 } from "@/lib/game-actions";
@@ -19,14 +20,36 @@ type Props = {
   onChanged: () => Promise<void>;
 };
 
+const STATEMENT_COOLDOWN_MS = 5000;
+
 export function EndgameView({ room, players, me, onChanged }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mainId, setMainId] = useState<string | null>(me.main_card_id);
   const [subIds, setSubIds] = useState<string[]>(me.sub_card_ids ?? []);
   const [reason, setReason] = useState(me.reason ?? "");
+  const [statement, setStatement] = useState(me.statement ?? "");
   const [copied, setCopied] = useState(false);
   const [savingPosterId, setSavingPosterId] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const [cooldownUntil, setCooldownUntil] = useState(0);
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    setStatement(me.statement ?? "");
+  }, [me.statement]);
+
+  useEffect(() => {
+    if (cooldownUntil <= Date.now()) return;
+    const id = window.setInterval(() => setTick((n) => n + 1), 500);
+    return () => window.clearInterval(id);
+  }, [cooldownUntil]);
+
+  const cooldownLeft = Math.max(0, Math.ceil((cooldownUntil - Date.now()) / 1000));
+  const canGenerate =
+    Boolean((me.reason ?? reason).trim()) &&
+    !generating &&
+    cooldownLeft <= 0;
 
   const mainCard = me.main_card_id ? getCard(me.main_card_id) : null;
   const posterPreview = getPosterPreviewClasses(mainCard?.pillar);
@@ -61,6 +84,41 @@ export function EndgameView({ room, players, me, onChanged }: Props) {
       if (prev.length >= 2) return [prev[1], id];
       return [...prev, id];
     });
+  }
+
+  async function generateStatement() {
+    if (!canGenerate) return;
+    setGenerating(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/statement", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mainCardId: me.main_card_id,
+          subCardIds: me.sub_card_ids ?? [],
+          handCardIds: me.hand ?? [],
+          reason: me.reason ?? reason,
+        }),
+      });
+      const data = (await res.json()) as { statement?: string; error?: string };
+      if (!res.ok || !data.statement) {
+        throw new Error(data.error || "生成に失敗しました");
+      }
+      setStatement(data.statement);
+      const supabase = createBrowserClient();
+      await saveStatement({
+        supabase,
+        actorId: me.id,
+        statement: data.statement,
+      });
+      await onChanged();
+      setCooldownUntil(Date.now() + STATEMENT_COOLDOWN_MS);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "生成に失敗しました");
+    } finally {
+      setGenerating(false);
+    }
   }
 
   if (room.phase === "SELECTING") {
@@ -256,9 +314,46 @@ export function EndgameView({ room, players, me, onChanged }: Props) {
                 </span>
               ))}
             </div>
-            <p className="mt-4 text-sm leading-relaxed text-[#e8ecff]/90">
-              {me.reason || "（理由なし）"}
-            </p>
+
+            <div className="mt-4 space-y-3">
+              <div>
+                <p className={`text-xs font-semibold ${posterPreview.title}`}>
+                  わたしの言葉
+                </p>
+                <p className="mt-1 text-sm leading-relaxed text-[#e8ecff]/80">
+                  {me.reason || "（理由なし）"}
+                </p>
+              </div>
+              {statement ? (
+                <div>
+                  <p className={`text-xs font-semibold ${posterPreview.title}`}>
+                    価値観ステートメント
+                  </p>
+                  <p className="mt-1 text-sm leading-relaxed text-[#e8ecff]">
+                    {statement}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-xs text-muted">
+                  任意: AIが宣言文に整えます。作らなくても画像保存できます。
+                </p>
+              )}
+              <button
+                type="button"
+                disabled={!canGenerate}
+                className="rounded-xl border border-line px-3 py-2 text-sm font-semibold disabled:opacity-40"
+                onClick={() => void generateStatement()}
+              >
+                {generating
+                  ? "生成中…"
+                  : cooldownLeft > 0
+                    ? `再生成まで ${cooldownLeft}s`
+                    : statement
+                      ? "ステートメントを作り直す"
+                      : "ステートメントを整える"}
+              </button>
+            </div>
+
             <button
               type="button"
               disabled={savingPosterId === me.id}
@@ -273,6 +368,7 @@ export function EndgameView({ room, players, me, onChanged }: Props) {
                       mainCardId: me.main_card_id,
                       subCardIds: me.sub_card_ids ?? [],
                       reason: me.reason,
+                      statement: statement || me.statement,
                       handCardIds: me.hand ?? [],
                     });
                   } catch (e) {
@@ -323,6 +419,11 @@ export function EndgameView({ room, players, me, onChanged }: Props) {
                 <p className="text-sm text-muted leading-relaxed">
                   {p.reason || "（理由なし）"}
                 </p>
+                {p.statement ? (
+                  <p className="text-sm leading-relaxed text-foreground/90">
+                    {p.statement}
+                  </p>
+                ) : null}
                 {p.id === me.id ? null : (
                   <button
                     type="button"
@@ -338,6 +439,7 @@ export function EndgameView({ room, players, me, onChanged }: Props) {
                             mainCardId: p.main_card_id,
                             subCardIds: p.sub_card_ids ?? [],
                             reason: p.reason,
+                            statement: p.statement,
                             handCardIds: p.hand ?? [],
                           });
                         } catch (e) {

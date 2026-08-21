@@ -6,6 +6,8 @@ export type PosterInput = {
   mainCardId: string | null;
   subCardIds: string[];
   reason: string | null;
+  /** AIが整えた価値観ステートメント */
+  statement?: string | null;
   /** 選定時点の手札（最終5枚） */
   handCardIds?: string[];
 };
@@ -418,34 +420,71 @@ export async function renderResultPoster(
 
   // 細い内枠の下辺は y=1272。日付はその上に置く
   const dateY = 1248;
-  const reasonTop = Math.min(subY + 170, 900);
+  const boxTop = Math.min(subY + 170, 880);
   const reason = (input.reason ?? "").trim() || "（理由未入力）";
+  const statement = (input.statement ?? "").trim();
   const finalFiveReserve = 52;
-  const reasonH = Math.min(240, dateY - 40 - reasonTop - finalFiveReserve);
+  const boxH = Math.min(280, dateY - 40 - boxTop - finalFiveReserve);
   ctx.fillStyle = "rgba(10, 12, 28, 0.55)";
-  roundRect(ctx, 120, reasonTop, width - 240, reasonH, 28);
+  roundRect(ctx, 120, boxTop, width - 240, boxH, 28);
   ctx.fill();
   ctx.strokeStyle = theme.reasonStroke;
   ctx.lineWidth = 2;
-  roundRect(ctx, 120, reasonTop, width - 240, reasonH, 28);
+  roundRect(ctx, 120, boxTop, width - 240, boxH, 28);
   ctx.stroke();
 
-  ctx.fillStyle = theme.reasonTitle;
-  ctx.font = "700 24px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
-  ctx.fillText("なぜ、これを大切にするのか", width / 2, reasonTop + 48);
-
-  const reasonTextTop = reasonTop + 78;
-  const reasonTextBottomPad = 28;
-  const reasonMaxH = Math.max(40, reasonH - (reasonTextTop - reasonTop) - reasonTextBottomPad);
-  const reasonMaxW = width - 320;
-  ctx.fillStyle = "#eef2ff";
+  const boxPadX = 160;
+  const maxW = width - boxPadX * 2;
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
-  const fitted = fitWrappedText(ctx, reason, reasonMaxW, reasonMaxH, 30, 16);
-  ctx.font = `500 ${fitted.size}px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif`;
-  fitted.lines.forEach((line, i) => {
-    ctx.fillText(line, width / 2, reasonTextTop + i * fitted.lineHeight);
-  });
+
+  if (statement) {
+    // 二段: 本人の言葉（小）＋ステートメント（主）
+    const wordsTop = boxTop + 28;
+    ctx.fillStyle = theme.reasonTitle;
+    ctx.font = "700 18px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
+    ctx.fillText("わたしの言葉", width / 2, wordsTop);
+
+    const wordsBodyTop = wordsTop + 28;
+    const wordsMaxH = Math.max(36, Math.floor(boxH * 0.28));
+    ctx.fillStyle = "rgba(238,242,255,0.78)";
+    const wordsFit = fitWrappedText(ctx, reason, maxW, wordsMaxH, 22, 14);
+    ctx.font = `500 ${wordsFit.size}px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif`;
+    wordsFit.lines.forEach((line, i) => {
+      ctx.fillText(line, width / 2, wordsBodyTop + i * wordsFit.lineHeight);
+    });
+
+    const stmtTitleTop =
+      wordsBodyTop + wordsFit.lines.length * wordsFit.lineHeight + 22;
+    ctx.fillStyle = theme.reasonTitle;
+    ctx.font = "700 22px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
+    ctx.fillText("価値観ステートメント", width / 2, stmtTitleTop);
+
+    const stmtBodyTop = stmtTitleTop + 34;
+    const stmtMaxH = Math.max(
+      40,
+      boxTop + boxH - stmtBodyTop - 24,
+    );
+    ctx.fillStyle = "#eef2ff";
+    const stmtFit = fitWrappedText(ctx, statement, maxW, stmtMaxH, 28, 15);
+    ctx.font = `500 ${stmtFit.size}px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif`;
+    stmtFit.lines.forEach((line, i) => {
+      ctx.fillText(line, width / 2, stmtBodyTop + i * stmtFit.lineHeight);
+    });
+  } else {
+    ctx.fillStyle = theme.reasonTitle;
+    ctx.font = "700 24px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
+    ctx.fillText("なぜ、これを大切にするのか", width / 2, boxTop + 48);
+
+    const reasonTextTop = boxTop + 78;
+    const reasonMaxH = Math.max(40, boxH - (reasonTextTop - boxTop) - 28);
+    ctx.fillStyle = "#eef2ff";
+    const fitted = fitWrappedText(ctx, reason, maxW, reasonMaxH, 30, 16);
+    ctx.font = `500 ${fitted.size}px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif`;
+    fitted.lines.forEach((line, i) => {
+      ctx.fillText(line, width / 2, reasonTextTop + i * fitted.lineHeight);
+    });
+  }
   ctx.textBaseline = "alphabetic";
 
   // 最終5枚（理由欄の下・小さめ）
@@ -456,7 +495,7 @@ export async function renderResultPoster(
   if (handLabels.length > 0) {
     ctx.fillStyle = theme.footer;
     ctx.font = "500 18px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
-    ctx.fillText(handLabels.join("  ·  "), width / 2, reasonTop + reasonH + 34);
+    ctx.fillText(handLabels.join("  ·  "), width / 2, boxTop + boxH + 34);
   }
 
   ctx.fillStyle = theme.footer;

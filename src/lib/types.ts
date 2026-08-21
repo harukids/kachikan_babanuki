@@ -33,6 +33,7 @@ export type Player = {
   main_card_id: string | null;
   sub_card_ids: string[];
   reason: string | null;
+  statement?: string | null;
   ready_selecting: boolean;
   ready_writing: boolean;
   is_host: boolean;

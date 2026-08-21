@@ -18,6 +18,9 @@ export default function PosterPreviewPage() {
   const [reason, setReason] = useState(
     "自分らしくいられる関係を大切にしたいから。",
   );
+  const [statement, setStatement] = useState(
+    "わたしは自由と感謝を軸に、成長し続けられる関係を大切にする。自分らしさを手放さず、人と誠実につながる働き方を選ぶ。",
+  );
   const [busy, setBusy] = useState(false);
   const [rendering, setRendering] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -46,6 +49,7 @@ export default function PosterPreviewPage() {
             mainCardId: mainId,
             subCardIds: [subA, subB],
             reason,
+            statement,
             handCardIds: [mainId, subA, subB, "heart-01", "work-08"],
           });
           if (!cancelled) {
@@ -65,7 +69,7 @@ export default function PosterPreviewPage() {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [name, mainId, subA, subB, reason]);
+  }, [name, mainId, subA, subB, reason, statement]);
 
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-6 px-4 py-10">
@@ -137,11 +141,20 @@ export default function PosterPreviewPage() {
       </div>
 
       <label className="block space-y-1">
-        <span className="text-sm text-muted">理由</span>
+        <span className="text-sm text-muted">理由（わたしの言葉）</span>
         <textarea
           className="min-h-24 w-full rounded-xl border border-line bg-panel px-3 py-2 text-sm"
           value={reason}
           onChange={(e) => setReason(e.target.value)}
+        />
+      </label>
+
+      <label className="block space-y-1">
+        <span className="text-sm text-muted">価値観ステートメント</span>
+        <textarea
+          className="min-h-24 w-full rounded-xl border border-line bg-panel px-3 py-2 text-sm"
+          value={statement}
+          onChange={(e) => setStatement(e.target.value)}
         />
       </label>
 
@@ -177,6 +190,7 @@ export default function PosterPreviewPage() {
                 mainCardId: mainId,
                 subCardIds: [subA, subB],
                 reason,
+                statement,
                 handCardIds: [mainId, subA, subB, "heart-01", "work-08"],
               });
             } catch (e) {
