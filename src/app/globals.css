@@ -68,10 +68,15 @@ body::before {
   mix-blend-mode: screen;
 }
 
-main,
-body > * {
+main {
   position: relative;
   z-index: 1;
+}
+
+/* 背景装飾は fixed のまま（body > * で relative に潰さない） */
+[data-bg-art] {
+  position: fixed;
+  z-index: 0;
 }
 
 @keyframes kachikan-pulse-ring {
