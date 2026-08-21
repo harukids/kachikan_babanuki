@@ -311,15 +311,15 @@ export async function renderResultPoster(
   ctx.fillStyle = band;
   ctx.fillRect(0, 0, width, height);
 
-  // 白線イラスト — 「名前」と「メイン語」のあいだの空きに置く（タイトル／名前には重ねない）
+  // 白線イラスト — 「名前」と「メイン語」のあいだ（大きめ・透過で透かし）
   if (input.mainCardId) {
     const art = await loadLineArt(input.mainCardId, pillar);
     if (art) {
-      const artSize = 280;
+      const artSize = 400;
       const ax = (width - artSize) / 2;
-      const ay = 235;
+      const ay = 200;
       ctx.save();
-      ctx.globalAlpha = 0.36;
+      ctx.globalAlpha = 0.34;
       ctx.drawImage(art, ax, ay, artSize, artSize);
       ctx.restore();
     }
