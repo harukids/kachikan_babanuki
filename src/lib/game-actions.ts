@@ -377,7 +377,7 @@ export async function closeRoom({
 }
 
 export function formatResultsText(players: Player[]): string {
-  const lines = ["価値観ババ抜き 結果", ""];
+  const lines = ["Value Drop 結果", ""];
   for (const p of players) {
     const finalFive = (p.hand ?? [])
       .map((id) => DECK.find((c) => c.id === id)?.label ?? id)

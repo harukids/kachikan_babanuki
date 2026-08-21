@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "価値観ババ抜き",
-  description: "リモートでできる価値観ババ抜き — 仕事仲間と価値観を言葉にする",
+  title: "Value Drop",
+  description: "Value Drop online — 仕事仲間と価値観を言葉にする",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

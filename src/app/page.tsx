@@ -85,7 +85,7 @@ export default function HomePage() {
     <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center gap-8 px-4 py-12">
       <header className="space-y-2">
         <p className="text-sm font-semibold tracking-wide text-mint">
-          リモート価値観ババ抜き
+          Value Drop online
         </p>
         <h1 className="text-3xl font-bold leading-tight text-foreground">
           価値観を選び、

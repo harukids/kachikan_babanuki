@@ -1,4 +1,4 @@
--- 価値観ババ抜き MVP schema（何度実行しても大丈夫な版）
+-- Value Drop MVP schema（何度実行しても大丈夫な版）
 -- Supabase SQL Editor で実行してください。
 -- 部屋コード＝招待券。一覧なし。MVPは緩いポリシー。
 

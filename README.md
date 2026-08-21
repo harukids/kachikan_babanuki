@@ -1,4 +1,4 @@
-# 価値観ババ抜き（リモート）
+# Value Drop online
 
 AI-Driven School 卒業制作。仕事仲間と価値観を言語化するカードワークの Web アプリ。
 
