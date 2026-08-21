@@ -4,9 +4,9 @@ import Link from "next/link";
 import { DECK, PILLAR_LABEL } from "@/lib/deck";
 
 const VERSIONS = [
-  { key: "v1", label: "v1 シンボル", src: (id: string) => `/illustrations/${id}.svg?v=20260822c` },
-  { key: "v2", label: "v2 一筆", src: (id: string) => `/illustrations/v2/${id}.svg?v=20260822c` },
-  { key: "v3", label: "v3 装飾", src: (id: string) => `/illustrations/v3/${id}.svg?v=20260822c` },
+  { key: "v1", label: "v1 シンボル", src: (id: string) => `/illustrations/${id}.svg?v=20260822d` },
+  { key: "v2", label: "v2 一筆", src: (id: string) => `/illustrations/v2/${id}.svg?v=20260822d` },
+  { key: "v3", label: "v3 装飾", src: (id: string) => `/illustrations/v3/${id}.svg?v=20260822d` },
 ] as const;
 
 export default function IllustrationsComparePage() {

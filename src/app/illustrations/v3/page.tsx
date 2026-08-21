@@ -5,7 +5,7 @@ import { DECK, PILLAR_LABEL } from "@/lib/deck";
 import type { Pillar } from "@/lib/types";
 
 const PILLARS: Pillar[] = ["heart", "work", "growth"];
-const CACHE = "20260822c";
+const CACHE = "20260822d";
 
 export default function IllustrationsV3Page() {
   return (

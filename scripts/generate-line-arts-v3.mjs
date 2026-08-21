@@ -25,15 +25,17 @@ function l(x1, y1, x2, y2, w = 6) {
   return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" ${A} stroke-width="${w}"/>`;
 }
 function spark(cx, cy, s = 16) {
-  const h = s * 0.35;
-  return `<path d="M${cx} ${cy - s} L${cx + h} ${cy - h} L${cx + s} ${cy} L${cx + h} ${cy + h} L${cx} ${cy + s} L${cx - h} ${cy + h} L${cx - s} ${cy} L${cx - h} ${cy - h} Z" stroke="#fff" fill="#fff" stroke-width="2" stroke-linejoin="round"/>`;
+  // 塗りつぶしは線画より大きく見えるので、見た目を揃えて少し縮小
+  const size = s * 0.62;
+  const h = size * 0.35;
+  return `<path d="M${cx} ${cy - size} L${cx + h} ${cy - h} L${cx + size} ${cy} L${cx + h} ${cy + h} L${cx} ${cy + size} L${cx - h} ${cy + h} L${cx - size} ${cy} L${cx - h} ${cy - h} Z" stroke="#fff" fill="#fff" stroke-width="1.5" stroke-linejoin="round"/>`;
 }
 function dots(...pairs) {
   return pairs
-    .map(
-      ([x, y, r = 6]) =>
-        `<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" stroke="none"/>`,
-    )
+    .map(([x, y, r = 6]) => {
+      const radius = Math.max(3.5, r * 0.6);
+      return `<circle cx="${x}" cy="${y}" r="${radius}" fill="#fff" stroke="none"/>`;
+    })
     .join("");
 }
 
@@ -452,16 +454,16 @@ const arts = {
         dots([100, 130, 5], [400, 360, 5]),
       ].join(""),
     ),
-  "work-17": // 継続 — v2一筆 + はっきり見える塗りつぶし星・点
+  "work-17": // 継続 — v2一筆 + 控えめな星・点
     wrap(
       [
         p(
           "M190 210 C210 145 285 125 340 175 C385 220 375 305 310 345 C255 375 180 350 160 285 C170 320 215 345 270 335 C325 325 350 270 335 225 C315 175 265 165 225 195 C205 215 195 245 205 275",
           11,
         ),
-        spark(405, 115, 26),
-        spark(100, 155, 18),
-        dots([90, 350, 11], [425, 310, 10], [385, 205, 8], [130, 400, 7]),
+        spark(400, 125, 16),
+        spark(115, 165, 12),
+        dots([105, 345, 6], [415, 305, 5], [380, 205, 5]),
       ].join(""),
     ),
   "work-18": // 公平 — 天秤＋飾り
