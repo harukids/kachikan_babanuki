@@ -3,7 +3,7 @@ import {
   type WallpaperPatternId,
 } from "@/lib/line-art-wallpapers";
 
-const CACHE = "20260822k";
+const CACHE = "20260822m";
 const ASPECT_W = 9;
 const ASPECT_H = 16;
 
