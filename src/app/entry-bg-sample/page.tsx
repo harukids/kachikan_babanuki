@@ -11,6 +11,7 @@ import {
 const PATTERN_ORDER: WallpaperPatternId[] = [
   "scatter",
   "scatterDense",
+  "scatterUltra",
   "monogram",
   "monogramDense",
 ];
@@ -79,6 +80,9 @@ export default function EntryBgSamplePage() {
           <Link href="/?bg=scatterDense" className="text-mint underline">
             トップ·散らし高密度
           </Link>
+          <Link href="/?bg=scatterUltra" className="text-mint underline">
+            トップ·散らし超高密度
+          </Link>
           <Link href="/?bg=monogram" className="text-mint underline">
             トップ·モノグラム
           </Link>
@@ -107,7 +111,7 @@ export default function EntryBgSamplePage() {
       })}
 
       <p className="text-sm text-muted">
-        気に入ったパターン名を教えてください（散らし／散らし高密度／モノグラム／モノグラム高密度）。
+        気に入ったパターンを `?bg=` 付きURLで実機確認してください。
       </p>
 
       <Link href="/" className="text-sm text-mint underline">

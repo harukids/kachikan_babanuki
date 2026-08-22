@@ -12,12 +12,14 @@ export type WallpaperPlacement = {
 export type WallpaperPatternId =
   | "scatter"
   | "scatterDense"
+  | "scatterUltra"
   | "monogram"
   | "monogramDense";
 
 export const WALLPAPER_PATTERN_IDS: WallpaperPatternId[] = [
   "scatter",
   "scatterDense",
+  "scatterUltra",
   "monogram",
   "monogramDense",
 ];
@@ -52,6 +54,12 @@ export const WALLPAPER_PATTERNS: Record<
     label: "散らし・高密度",
     note: "28枚・小さめ・回転多め。今の散らしを密度アップ。",
     placements: buildDenseScatter(),
+  },
+
+  scatterUltra: {
+    label: "散らし・超高密度",
+    note: "全60種・さらに小さく・グリッドを崩したばら撒き。",
+    placements: buildUltraScatter(),
   },
 
   monogram: {
@@ -105,6 +113,41 @@ function buildDenseScatter(): WallpaperPlacement[] {
       opacity: 0.1 + (i % 5) * 0.012,
     };
   });
+}
+
+function buildUltraScatter(): WallpaperPlacement[] {
+  const cols = 5;
+  const rows = 12; // 60
+  const out: WallpaperPlacement[] = [];
+  // 疑似乱数っぽい固定オフセット（毎回同じ）
+  const jitter = [
+    -3, 2, -1, 4, -2, 3, 0, -4, 1, 5, -3, 2, 4, -1, 0, -5, 3, 1, -2, 4, -3, 2,
+    0, -4, 5, -1, 3, -2, 1, 4, -3, 0, 2, -5, 1, 3, -1, 4, -2, 0, 5, -3, 2, -4,
+    1, 3, -1, 0, 4, -2, 2, -5, 1, 3, -3, 0, 4, -1, 2, -2,
+  ];
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const i = r * cols + c;
+      const card = DECK[i];
+      if (!card) continue;
+      const jx = jitter[i] ?? 0;
+      const jy = jitter[(i * 3) % jitter.length] ?? 0;
+      const size = 10.5 + (i % 4) * 0.9;
+      const x = -2 + c * 20.5 + jx + (r % 2) * 4;
+      const y = -1 + r * 8.4 + jy * 0.45;
+      const rotate = ((i * 37 + c * 11) % 57) - 28;
+      out.push({
+        id: card.id,
+        x,
+        y,
+        size,
+        rotate,
+        opacity: 0.085 + (i % 6) * 0.01,
+      });
+    }
+  }
+  return out;
 }
 
 function buildMonogramGrid(opts: {
