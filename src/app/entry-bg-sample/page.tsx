@@ -16,20 +16,24 @@ const PATTERN_ORDER: WallpaperPatternId[] = [
   "monogramDense",
 ];
 
-function FakeEntryUi() {
+function FakeEntryUi({ compact }: { compact?: boolean }) {
   return (
-    <div className="relative z-[1] space-y-3 p-4">
-      <p className="text-xs font-semibold tracking-wide text-mint">
+    <div className={`relative z-[1] space-y-2 ${compact ? "p-2" : "p-4"}`}>
+      <p className="text-[10px] font-semibold tracking-wide text-mint">
         Value Drop online
       </p>
-      <h2 className="text-xl font-bold leading-tight">
-        価値観を選び、
-        <br />
-        言葉にする
-      </h2>
-      <div className="rounded-2xl border border-line bg-panel/90 p-4 backdrop-blur-[2px]">
-        <p className="text-sm text-muted">表示名 · 部屋を作る …（UIの仮置き）</p>
-      </div>
+      {!compact && (
+        <>
+          <h2 className="text-lg font-bold leading-tight">
+            価値観を選び、
+            <br />
+            言葉にする
+          </h2>
+          <div className="rounded-xl border border-line bg-panel/90 p-3 backdrop-blur-[2px]">
+            <p className="text-xs text-muted">表示名 · 部屋を作る …</p>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -38,26 +42,34 @@ function Frame({
   label,
   note,
   wide,
+  compact,
   children,
 }: {
   label: string;
-  note: string;
+  note?: string;
   wide?: boolean;
+  compact?: boolean;
   children: ReactNode;
 }) {
   return (
-    <section className="space-y-2">
+    <section className="space-y-1.5">
       <div>
         <p className="text-xs font-semibold text-mint">{label}</p>
-        <p className="text-[11px] leading-relaxed text-muted">{note}</p>
+        {note && (
+          <p className="text-[11px] leading-relaxed text-muted">{note}</p>
+        )}
       </div>
       <div
         className={`relative overflow-hidden rounded-2xl border border-line bg-[#0b1020] ${
-          wide ? "aspect-[16/9]" : "aspect-[9/16] max-h-[560px]"
+          wide
+            ? "aspect-[16/9]"
+            : compact
+              ? "aspect-[9/16]"
+              : "aspect-[9/16] max-h-[520px]"
         }`}
       >
         {children}
-        <FakeEntryUi />
+        <FakeEntryUi compact={compact} />
       </div>
     </section>
   );
@@ -65,54 +77,86 @@ function Frame({
 
 export default function EntryBgSamplePage() {
   return (
-    <main className="relative z-[1] mx-auto flex w-full max-w-lg flex-1 flex-col gap-10 px-4 py-10">
-      <header className="space-y-2">
+    <main className="relative z-[1] mx-auto flex w-full max-w-lg flex-1 flex-col gap-8 px-4 py-10">
+      <header className="space-y-3">
         <p className="text-xs font-semibold tracking-wide text-mint">
-          見本 · cover壁紙のパターン
+          見本 · 全パターン比較
         </p>
-        <h1 className="text-2xl font-bold">シンボル壁紙の構図</h1>
+        <h1 className="text-2xl font-bold">入場背景ウォールペーパー</h1>
         <p className="text-sm leading-relaxed text-muted">
-          いずれも 9:16 構図の cover 方式です。本番トップ／ロビーはいま
-          <span className="text-mint"> 散らし・高密度 </span>
-          を試用中なので、スマホとPCで同じURLを見比べてください。
+          全5案です。上で一覧、下で縦／横の詳細。実機は各リンクのトップURLで。
         </p>
-        <div className="flex flex-wrap gap-3 text-sm">
-          <Link href="/?bg=scatterDense" className="text-mint underline">
-            トップ·散らし高密度
-          </Link>
-          <Link href="/?bg=scatterUltra" className="text-mint underline">
-            トップ·散らし超高密度
-          </Link>
-          <Link href="/?bg=monogram" className="text-mint underline">
-            トップ·モノグラム
-          </Link>
-          <Link href="/?bg=monogramDense" className="text-mint underline">
-            トップ·モノグラム高密度
-          </Link>
+
+        <nav className="flex flex-wrap gap-2 text-sm">
+          {PATTERN_ORDER.map((id) => (
+            <a
+              key={id}
+              href={`#${id}`}
+              className="rounded-lg border border-line px-2.5 py-1 text-xs text-mint"
+            >
+              {WALLPAPER_PATTERNS[id].label}
+            </a>
+          ))}
+        </nav>
+
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm">
+          {PATTERN_ORDER.map((id) => (
+            <Link
+              key={`try-${id}`}
+              href={`/?bg=${id}`}
+              className="text-mint underline"
+            >
+              実機·{WALLPAPER_PATTERNS[id].label}
+            </Link>
+          ))}
         </div>
       </header>
 
-      {PATTERN_ORDER.map((id) => {
+      {/* 一覧：5つ並べて一目比較 */}
+      <section className="space-y-2">
+        <h2 className="text-sm font-semibold text-accent">一覧（縦）</h2>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {PATTERN_ORDER.map((id) => {
+            const p = WALLPAPER_PATTERNS[id];
+            return (
+              <a key={`grid-${id}`} href={`#${id}`} className="block">
+                <Frame label={p.label} compact>
+                  <LineArtCoverBg mode="preview" pattern={id} />
+                </Frame>
+              </a>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* 詳細：各パターン 縦+横 */}
+      {PATTERN_ORDER.map((id, index) => {
         const p = WALLPAPER_PATTERNS[id];
         return (
-          <div key={id} className="space-y-4">
-            <Frame label={p.label} note={p.note}>
+          <div
+            key={id}
+            id={id}
+            className="scroll-mt-6 space-y-4 border-t border-line pt-8"
+          >
+            <div className="space-y-1">
+              <p className="text-xs font-semibold text-muted">
+                {index + 1} / {PATTERN_ORDER.length}
+              </p>
+              <h2 className="text-lg font-bold">{p.label}</h2>
+              <p className="text-sm text-muted">{p.note}</p>
+              <Link href={`/?bg=${id}`} className="text-sm text-mint underline">
+                このパターンをトップで実機確認
+              </Link>
+            </div>
+            <Frame label="縦（9:16）">
               <LineArtCoverBg mode="preview" pattern={id} />
             </Frame>
-            <Frame
-              label={`${p.label} · 横長`}
-              note="同じ構図を横にcoverしたとき。"
-              wide
-            >
+            <Frame label="横（16:9 cover）" wide>
               <LineArtCoverBg mode="preview" pattern={id} denser />
             </Frame>
           </div>
         );
       })}
-
-      <p className="text-sm text-muted">
-        気に入ったパターンを `?bg=` 付きURLで実機確認してください。
-      </p>
 
       <Link href="/" className="text-sm text-mint underline">
         トップへ
