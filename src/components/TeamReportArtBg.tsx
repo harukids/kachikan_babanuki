@@ -12,28 +12,28 @@ type Layout = {
   right?: string;
 };
 
-/** メイン: 少し小さく・薄く、縦位置をばらす */
+/** メイン: 少し小さく・薄く、縦位置を互い違いに */
 const MAIN_LAYOUTS: Layout[] = [
-  { top: "2%", left: "32%", size: 210, rotate: -8, opacity: 0.2 },
-  { top: "18%", left: "-8%", size: 190, rotate: 12, opacity: 0.18 },
-  { top: "38%", right: "-10%", size: 200, rotate: -14, opacity: 0.19 },
-  { top: "55%", left: "6%", size: 180, rotate: 10, opacity: 0.17 },
-  { top: "72%", right: "2%", size: 185, rotate: -12, opacity: 0.17 },
-  { top: "88%", left: "28%", size: 170, rotate: 6, opacity: 0.16 },
+  { top: "2%", left: "22%", size: 220, rotate: -10, opacity: 0.2 },
+  { top: "18%", right: "-10%", size: 200, rotate: 14, opacity: 0.18 },
+  { top: "36%", left: "-10%", size: 210, rotate: -16, opacity: 0.19 },
+  { top: "54%", right: "-6%", size: 190, rotate: 11, opacity: 0.17 },
+  { top: "70%", left: "6%", size: 185, rotate: -8, opacity: 0.17 },
+  { top: "86%", right: "10%", size: 175, rotate: 9, opacity: 0.16 },
 ];
 
-/** サブ: もう一段階大きく、縦もずらす */
+/** サブ: 一段階大きく、端で装飾 */
 const SUB_LAYOUTS: Layout[] = [
-  { top: "0%", left: "-2%", size: 108, rotate: -22, opacity: 0.1 },
-  { top: "12%", right: "-3%", size: 102, rotate: 18, opacity: 0.09 },
-  { top: "28%", left: "-4%", size: 98, rotate: 24, opacity: 0.09 },
-  { top: "44%", right: "-2%", size: 106, rotate: -16, opacity: 0.09 },
-  { top: "60%", left: "-3%", size: 100, rotate: -20, opacity: 0.08 },
-  { top: "76%", right: "-4%", size: 104, rotate: 20, opacity: 0.09 },
-  { top: "8%", left: "48%", size: 92, rotate: 8, opacity: 0.08 },
-  { top: "34%", left: "42%", size: 90, rotate: -12, opacity: 0.07 },
-  { top: "68%", left: "46%", size: 96, rotate: 14, opacity: 0.08 },
-  { top: "92%", left: "38%", size: 94, rotate: -10, opacity: 0.07 },
+  { top: "0%", left: "-3%", size: 108, rotate: -24, opacity: 0.1 },
+  { top: "10%", right: "-4%", size: 102, rotate: 20, opacity: 0.09 },
+  { top: "26%", left: "-5%", size: 98, rotate: 26, opacity: 0.09 },
+  { top: "42%", right: "-3%", size: 106, rotate: -18, opacity: 0.09 },
+  { top: "58%", left: "-4%", size: 100, rotate: -22, opacity: 0.08 },
+  { top: "74%", right: "-5%", size: 104, rotate: 22, opacity: 0.09 },
+  { top: "90%", left: "0%", size: 96, rotate: 14, opacity: 0.08 },
+  { top: "48%", left: "42%", size: 88, rotate: -12, opacity: 0.07 },
+  { top: "8%", left: "44%", size: 86, rotate: 8, opacity: 0.07 },
+  { top: "82%", left: "40%", size: 90, rotate: -10, opacity: 0.07 },
 ];
 
 type Props = {
