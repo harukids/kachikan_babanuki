@@ -73,15 +73,22 @@ function planCaption(
   const { w, title, owner, compact } = opts;
   const pad = compact ? 10 : 14;
   const artSize = w - pad * 2;
-  const titleSize = compact ? 15 : 18;
-  const ownerSize = compact ? 12 : 14;
-  const textMax = Math.max(24, w - 16);
+  const titleSize = compact ? 14 : 18;
+  const ownerSize = compact ? 11 : 14;
+  const textMax = Math.max(20, w - 20);
+  const titleGap = compact ? 6 : 8;
 
   ctx.font = `600 ${titleSize}px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif`;
-  const titleLines = wrapSimple(ctx, title || "—", textMax, titleSize).slice(
-    0,
-    2,
-  );
+  // compact は1行に抑え、はみ出しは省略
+  let titleLines: string[];
+  if (compact) {
+    titleLines = [truncateToWidth(ctx, title || "—", textMax)];
+  } else {
+    titleLines = wrapSimple(ctx, title || "—", textMax, titleSize, "600").slice(
+      0,
+      2,
+    );
+  }
 
   let ownerLine: string | null = null;
   if (owner) {
@@ -90,8 +97,8 @@ function planCaption(
   }
 
   const titleBlock = titleLines.length * (titleSize + 2);
-  const ownerBlock = ownerLine ? ownerSize + 4 : 0;
-  const captionH = 8 + titleBlock + ownerBlock + 10;
+  const ownerBlock = ownerLine ? titleGap + ownerSize : 0;
+  const captionH = 10 + titleBlock + ownerBlock + 12;
   const height = pad + artSize + captionH;
 
   return {
@@ -212,13 +219,14 @@ async function drawValueCard(
   ctx.textBaseline = "top";
   ctx.fillStyle = "#f4f7ff";
   ctx.font = `600 ${titleSize}px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif`;
-  let textY = y + pad + artSize + 8;
+  let textY = y + pad + artSize + 10;
   titleLines.forEach((line, i) => {
     ctx.fillText(line, x + w / 2, textY + i * (titleSize + 2));
   });
-  textY += titleLines.length * (titleSize + 2) + 2;
+  textY += titleLines.length * (titleSize + 2);
 
   if (ownerLine) {
+    textY += compact ? 6 : 8;
     ctx.fillStyle = "#98a8d0";
     ctx.font = `500 ${ownerSize}px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif`;
     ctx.fillText(ownerLine, x + w / 2, textY);
@@ -226,6 +234,23 @@ async function drawValueCard(
 
   ctx.restore();
   return h;
+}
+
+/** 左見出し（top基準）。描画後の次の y を返す */
+function drawSectionTitle(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  y: number,
+  fontSize = 22,
+): number {
+  ctx.save();
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  ctx.fillStyle = "#ffe28a";
+  ctx.font = `700 ${fontSize}px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif`;
+  ctx.fillText(text, CONTENT_LEFT, y);
+  ctx.restore();
+  return y + fontSize + 14;
 }
 
 /** 末尾に余分な gap を付けず、次の y を返す */
@@ -328,8 +353,10 @@ export async function downloadTeamReportImage(input: {
     analysisPadTop + analysisLines.length * analysisLineH + analysisPadBottom,
   );
 
+  const sectionTitleH = (size: number) => size + 14;
+
   let yCursor = 250;
-  yCursor += 28;
+  yCursor += sectionTitleH(24);
   yCursor += gridBlockHeight(
     measure,
     members,
@@ -338,10 +365,10 @@ export async function downloadTeamReportImage(input: {
     mainGap,
     false,
   );
-  yCursor += 10;
+  yCursor += 28;
 
   if (subs.length > 0) {
-    yCursor += 24;
+    yCursor += sectionTitleH(22);
     yCursor += gridBlockHeight(
       measure,
       subs,
@@ -350,12 +377,12 @@ export async function downloadTeamReportImage(input: {
       subGap,
       true,
     );
-    yCursor += 8;
+    yCursor += 28;
   }
 
-  yCursor += 28;
+  yCursor += sectionTitleH(22);
   yCursor += 42 * 3;
-  yCursor += 12;
+  yCursor += 20;
   yCursor += analysisBoxH;
   yCursor += 70;
 
@@ -398,11 +425,7 @@ export async function downloadTeamReportImage(input: {
   );
 
   let y = 250;
-  ctx.textAlign = "left";
-  ctx.fillStyle = "#ffe28a";
-  ctx.font = "700 24px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
-  ctx.fillText("このチームのメイン価値観", CONTENT_LEFT, y);
-  y += 28;
+  y = drawSectionTitle(ctx, "このチームのメイン価値観", y, 24);
 
   y = await drawCardGrid(ctx, {
     startY: y,
@@ -412,15 +435,10 @@ export async function downloadTeamReportImage(input: {
     gap: mainGap,
     compact: false,
   });
-  y += 10;
+  y += 28;
 
   if (subs.length > 0) {
-    ctx.textAlign = "left";
-    ctx.textBaseline = "alphabetic";
-    ctx.fillStyle = "#ffe28a";
-    ctx.font = "700 22px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
-    ctx.fillText("サブ", CONTENT_LEFT, y);
-    y += 24;
+    y = drawSectionTitle(ctx, "サブ", y, 22);
     y = await drawCardGrid(ctx, {
       startY: y,
       items: subs,
@@ -429,18 +447,14 @@ export async function downloadTeamReportImage(input: {
       gap: subGap,
       compact: true,
     });
-    y += 8;
+    y += 28;
   }
+
+  y = drawSectionTitle(ctx, "柱の偏り（メイン＋サブ）", y, 22);
 
   const pillars: Pillar[] = ["heart", "work", "growth"];
   const total =
     pillars.reduce((s, p) => s + (input.snapshot.pillarAll[p] ?? 0), 0) || 1;
-  ctx.textAlign = "left";
-  ctx.textBaseline = "alphabetic";
-  ctx.fillStyle = "#ffe28a";
-  ctx.font = "700 22px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
-  ctx.fillText("柱の偏り（メイン＋サブ）", CONTENT_LEFT, y);
-  y += 28;
 
   const labelColW = 160;
   const countColW = 40;
@@ -452,9 +466,10 @@ export async function downloadTeamReportImage(input: {
     const count = input.snapshot.pillarAll[p] ?? 0;
     const ratio = count / total;
     ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
     ctx.fillStyle = "#dce6ff";
     ctx.font = "600 20px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
-    ctx.fillText(PILLAR_LABEL[p], CONTENT_LEFT, y + 18);
+    ctx.fillText(PILLAR_LABEL[p], CONTENT_LEFT, y + 12);
     ctx.fillStyle = "rgba(255,255,255,0.12)";
     roundRect(ctx, barX, y, barW, 24, 10);
     ctx.fill();
@@ -463,11 +478,11 @@ export async function downloadTeamReportImage(input: {
     ctx.fill();
     ctx.textAlign = "right";
     ctx.fillStyle = "#f4f7ff";
-    ctx.fillText(`${count}`, countX, y + 18);
+    ctx.fillText(`${count}`, countX, y + 12);
     y += 42;
   }
 
-  y += 12;
+  y += 20;
   ctx.fillStyle = "rgba(10, 12, 28, 0.55)";
   roundRect(ctx, CONTENT_LEFT, y, CONTENT_WIDTH, analysisBoxH, 24);
   ctx.fill();
@@ -538,8 +553,9 @@ function wrapSimple(
   text: string,
   maxWidth: number,
   fontSize: number,
+  weight: "500" | "600" | "700" = "500",
 ): string[] {
-  ctx.font = `500 ${fontSize}px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif`;
+  ctx.font = `${weight} ${fontSize}px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif`;
   const chars = [...text];
   const lines: string[] = [];
   let line = "";
