@@ -9,7 +9,7 @@ import { joinRoomAsGuest } from "@/lib/join-room";
 import { startAndDeal } from "@/lib/game-actions";
 import { PlayingView } from "@/components/PlayingView";
 import { EndgameView } from "@/components/EndgameView";
-import { LineArtScatter } from "@/components/LineArtScatter";
+import { LineArtCoverBg } from "@/components/LineArtCoverBg";
 import {
   MAX_PLAYERS,
   MIN_PLAYERS,
@@ -284,7 +284,7 @@ export default function RoomPage() {
 
     return (
       <>
-        <LineArtScatter denser />
+        <LineArtCoverBg denser />
         <main className="relative z-[1] mx-auto flex w-full max-w-lg flex-1 flex-col justify-center gap-6 px-4 py-12">
         <header className="space-y-2">
           <p className="text-xs font-semibold tracking-wide text-mint">部屋 {code}</p>
@@ -343,7 +343,7 @@ export default function RoomPage() {
 
   return (
     <>
-      {room.phase === "LOBBY" && <LineArtScatter denser />}
+      {room.phase === "LOBBY" && <LineArtCoverBg denser />}
       <main className="relative z-[1] mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-8">
       <header className="space-y-1">
         <p className="text-xs font-semibold tracking-wide text-mint">部屋 {code}</p>

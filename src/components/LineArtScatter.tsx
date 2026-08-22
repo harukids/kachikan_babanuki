@@ -8,7 +8,7 @@ type Placement = {
   right?: string;
 };
 
-/** トップ／ロビー用の線画散らし（位置は固定で毎回同じ） */
+/** トップ／ロビー用の線画散らし（位置は固定で毎回同じ）※従来方式 */
 const PLACEMENTS: Placement[] = [
   { id: "heart-01", top: "5%", left: "-2%", size: 200, rotate: -22, opacity: 0.14 },
   { id: "work-08", top: "3%", right: "-4%", size: 180, rotate: 16, opacity: 0.13 },
@@ -24,17 +24,27 @@ const PLACEMENTS: Placement[] = [
 
 type LineArtScatterProps = {
   denser?: boolean;
+  /** page: 全画面 fixed / preview: 親の absolute */
+  mode?: "page" | "preview";
 };
 
-export function LineArtScatter({ denser = false }: LineArtScatterProps) {
+export function LineArtScatter({
+  denser = false,
+  mode = "page",
+}: LineArtScatterProps) {
   const boost = denser ? 1.1 : 1;
   return (
     <div
       aria-hidden
-      data-bg-art
-      className="pointer-events-none inset-0 overflow-hidden"
+      data-bg-art={mode === "page" ? true : undefined}
+      className={
+        mode === "page"
+          ? "pointer-events-none inset-0 overflow-hidden"
+          : "pointer-events-none absolute inset-0 overflow-hidden"
+      }
     >
       {PLACEMENTS.map((p) => (
+        // eslint-disable-next-line @next/next/no-img-element
         <img
           key={p.id}
           src={`/illustrations/v3/${p.id}.svg?v=20260822e`}
@@ -46,8 +56,8 @@ export function LineArtScatter({ denser = false }: LineArtScatterProps) {
             top: p.top,
             left: p.left,
             right: p.right,
-            width: p.size,
-            height: p.size,
+            width: mode === "preview" ? `${(p.size / 390) * 100}%` : p.size,
+            height: mode === "preview" ? "auto" : p.size,
             opacity: Math.min(0.22, p.opacity * boost),
             transform: `rotate(${p.rotate}deg)`,
           }}
