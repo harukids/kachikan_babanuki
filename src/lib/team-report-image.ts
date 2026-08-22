@@ -381,6 +381,7 @@ export async function downloadTeamReportImage(input: {
   }
 
   yCursor += sectionTitleH(22);
+  yCursor += 10; // 見出しとバーの行間
   yCursor += 42 * 3;
   yCursor += 20;
   yCursor += analysisBoxH;
@@ -451,6 +452,7 @@ export async function downloadTeamReportImage(input: {
   }
 
   y = drawSectionTitle(ctx, "柱の偏り（メイン＋サブ）", y, 22);
+  y += 10; // 見出しとバーの行間
 
   const pillars: Pillar[] = ["heart", "work", "growth"];
   const total =
