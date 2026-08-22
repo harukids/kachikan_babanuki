@@ -12,28 +12,28 @@ type Layout = {
   right?: string;
 };
 
-/** メイン: 個人ポスターに近い存在感 */
+/** メイン: 少し小さく・薄く、縦位置をばらす */
 const MAIN_LAYOUTS: Layout[] = [
-  { top: "6%", left: "28%", size: 280, rotate: -8, opacity: 0.28 },
-  { top: "28%", left: "-6%", size: 250, rotate: 12, opacity: 0.26 },
-  { top: "26%", right: "-8%", size: 260, rotate: -14, opacity: 0.26 },
-  { top: "52%", left: "8%", size: 230, rotate: 10, opacity: 0.24 },
-  { top: "50%", right: "4%", size: 240, rotate: -12, opacity: 0.24 },
-  { top: "72%", left: "30%", size: 220, rotate: 6, opacity: 0.22 },
+  { top: "2%", left: "32%", size: 210, rotate: -8, opacity: 0.2 },
+  { top: "18%", left: "-8%", size: 190, rotate: 12, opacity: 0.18 },
+  { top: "38%", right: "-10%", size: 200, rotate: -14, opacity: 0.19 },
+  { top: "55%", left: "6%", size: 180, rotate: 10, opacity: 0.17 },
+  { top: "72%", right: "2%", size: 185, rotate: -12, opacity: 0.17 },
+  { top: "88%", left: "28%", size: 170, rotate: 6, opacity: 0.16 },
 ];
 
-/** サブ: 端の装飾 */
+/** サブ: もう一段階大きく、縦もずらす */
 const SUB_LAYOUTS: Layout[] = [
-  { top: "2%", left: "-2%", size: 90, rotate: -22, opacity: 0.1 },
-  { top: "4%", right: "-3%", size: 85, rotate: 18, opacity: 0.09 },
-  { top: "22%", left: "-4%", size: 80, rotate: 24, opacity: 0.09 },
-  { top: "40%", right: "-2%", size: 88, rotate: -16, opacity: 0.09 },
-  { top: "58%", left: "-3%", size: 82, rotate: -20, opacity: 0.08 },
-  { top: "64%", right: "-4%", size: 86, rotate: 20, opacity: 0.09 },
-  { top: "80%", left: "2%", size: 78, rotate: 12, opacity: 0.08 },
-  { top: "84%", right: "1%", size: 84, rotate: -14, opacity: 0.08 },
-  { top: "12%", left: "42%", size: 70, rotate: 8, opacity: 0.07 },
-  { top: "88%", left: "40%", size: 72, rotate: -10, opacity: 0.07 },
+  { top: "0%", left: "-2%", size: 108, rotate: -22, opacity: 0.1 },
+  { top: "12%", right: "-3%", size: 102, rotate: 18, opacity: 0.09 },
+  { top: "28%", left: "-4%", size: 98, rotate: 24, opacity: 0.09 },
+  { top: "44%", right: "-2%", size: 106, rotate: -16, opacity: 0.09 },
+  { top: "60%", left: "-3%", size: 100, rotate: -20, opacity: 0.08 },
+  { top: "76%", right: "-4%", size: 104, rotate: 20, opacity: 0.09 },
+  { top: "8%", left: "48%", size: 92, rotate: 8, opacity: 0.08 },
+  { top: "34%", left: "42%", size: 90, rotate: -12, opacity: 0.07 },
+  { top: "68%", left: "46%", size: 96, rotate: 14, opacity: 0.08 },
+  { top: "92%", left: "38%", size: 94, rotate: -10, opacity: 0.07 },
 ];
 
 type Props = {
@@ -59,7 +59,7 @@ export function TeamReportArtBg({ snapshot }: Props) {
           // eslint-disable-next-line @next/next/no-img-element
           <img
             key={`main-${id}-${i}`}
-            src={`/illustrations/v3/${id}.svg?v=20260822h`}
+            src={`/illustrations/v3/${id}.svg?v=20260822i`}
             alt=""
             className="absolute select-none"
             style={{
@@ -81,7 +81,7 @@ export function TeamReportArtBg({ snapshot }: Props) {
           // eslint-disable-next-line @next/next/no-img-element
           <img
             key={`sub-${id}-${i}`}
-            src={`/illustrations/v3/${id}.svg?v=20260822h`}
+            src={`/illustrations/v3/${id}.svg?v=20260822i`}
             alt=""
             className="absolute select-none"
             style={{

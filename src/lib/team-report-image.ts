@@ -47,42 +47,42 @@ export async function downloadTeamReportImage(input: {
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, width, height);
 
-  // メインは存在感強め、サブは装飾
+  // メインは少し小さく薄く・縦をばらす / サブは装飾で一段大きく
   const { mains, subs } = resolveMainAndSubCardIds(input.snapshot);
   const mainLayouts = [
-    { x: 340, y: 160, s: 380, r: -8 },
-    { x: 40, y: 420, s: 340, r: 14 },
-    { x: 680, y: 400, s: 360, r: -16 },
-    { x: 200, y: 780, s: 320, r: 10 },
-    { x: 620, y: 760, s: 330, r: -12 },
-    { x: 360, y: 980, s: 300, r: 6 },
+    { x: 380, y: 40, s: 280, r: -8 },
+    { x: 20, y: 280, s: 250, r: 12 },
+    { x: 740, y: 480, s: 270, r: -14 },
+    { x: 80, y: 700, s: 240, r: 10 },
+    { x: 700, y: 920, s: 250, r: -12 },
+    { x: 360, y: 1080, s: 230, r: 6 },
   ];
   const subLayouts = [
-    { x: 20, y: 60, s: 110, r: -22 },
-    { x: 920, y: 80, s: 100, r: 18 },
-    { x: 30, y: 280, s: 95, r: 26 },
-    { x: 940, y: 300, s: 105, r: -14 },
-    { x: 10, y: 620, s: 100, r: -20 },
-    { x: 950, y: 640, s: 95, r: 22 },
-    { x: 40, y: 980, s: 90, r: 12 },
-    { x: 930, y: 1000, s: 100, r: -18 },
-    { x: 480, y: 40, s: 85, r: 8 },
-    { x: 500, y: 1180, s: 90, r: -10 },
+    { x: 10, y: 20, s: 130, r: -22 },
+    { x: 920, y: 140, s: 120, r: 18 },
+    { x: 20, y: 400, s: 115, r: 26 },
+    { x: 930, y: 560, s: 125, r: -14 },
+    { x: 5, y: 820, s: 118, r: -20 },
+    { x: 940, y: 980, s: 122, r: 22 },
+    { x: 480, y: 180, s: 110, r: 8 },
+    { x: 500, y: 620, s: 108, r: -12 },
+    { x: 460, y: 880, s: 115, r: 14 },
+    { x: 490, y: 1200, s: 112, r: -10 },
   ];
 
   for (let i = 0; i < Math.min(mains.length, mainLayouts.length); i++) {
-    const img = await loadImage(`/illustrations/v3/${mains[i]}.svg?v=20260822h`);
+    const img = await loadImage(`/illustrations/v3/${mains[i]}.svg?v=20260822i`);
     if (!img) continue;
     const L = mainLayouts[i];
     ctx.save();
-    ctx.globalAlpha = 0.3;
+    ctx.globalAlpha = 0.2;
     ctx.translate(L.x + L.s / 2, L.y + L.s / 2);
     ctx.rotate((L.r * Math.PI) / 180);
     ctx.drawImage(img, -L.s / 2, -L.s / 2, L.s, L.s);
     ctx.restore();
   }
   for (let i = 0; i < Math.min(subs.length, subLayouts.length); i++) {
-    const img = await loadImage(`/illustrations/v3/${subs[i]}.svg?v=20260822h`);
+    const img = await loadImage(`/illustrations/v3/${subs[i]}.svg?v=20260822i`);
     if (!img) continue;
     const L = subLayouts[i];
     ctx.save();
