@@ -53,6 +53,8 @@ async function drawValueCard(
   const captionH = owner ? (compact ? 44 : 52) : compact ? 28 : 36;
   const h = pad + artSize + captionH;
 
+  ctx.save();
+
   const fill =
     card?.pillar === "work"
       ? "#101828"
@@ -111,8 +113,8 @@ async function drawValueCard(
     ctx.font = `500 ${ownerSize}px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif`;
     ctx.fillText(owner, x + w / 2, textY);
   }
-  ctx.textBaseline = "alphabetic";
 
+  ctx.restore();
   return h;
 }
 
@@ -169,23 +171,28 @@ export async function downloadTeamReportImage(input: {
   );
 
   let y = 250;
+  const contentLeft = 80;
+  const contentRight = width - 80;
+  const contentWidth = contentRight - contentLeft;
+
   ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
   ctx.fillStyle = "#ffe28a";
   ctx.font = "700 24px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
-  ctx.fillText("このチームのメイン価値観", 80, y);
+  ctx.fillText("このチームのメイン価値観", contentLeft, y);
   y += 28;
 
   const members = input.snapshot.members;
   const cols = Math.min(4, Math.max(2, members.length || 2));
   const gap = 20;
-  const cardW = (width - 160 - gap * (cols - 1)) / cols;
+  const cardW = (contentWidth - gap * (cols - 1)) / cols;
   let col = 0;
   let rowY = y;
   let rowH = 0;
   for (const m of members) {
     const mainId = memberMainId(m);
     if (!mainId) continue;
-    const x = 80 + col * (cardW + gap);
+    const x = contentLeft + col * (cardW + gap);
     const h = await drawValueCard(ctx, {
       x,
       y: rowY,
@@ -207,18 +214,20 @@ export async function downloadTeamReportImage(input: {
 
   const subs = resolveSubCardsWithOwners(input.snapshot);
   if (subs.length > 0) {
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
     ctx.fillStyle = "#ffe28a";
     ctx.font = "700 22px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
-    ctx.fillText("サブ", 80, y);
+    ctx.fillText("サブ", contentLeft, y);
     y += 24;
     const subCols = Math.min(6, Math.max(3, subs.length));
     const subGap = 14;
-    const subW = (width - 160 - subGap * (subCols - 1)) / subCols;
+    const subW = (contentWidth - subGap * (subCols - 1)) / subCols;
     col = 0;
     rowY = y;
     rowH = 0;
     for (const s of subs.slice(0, 12)) {
-      const x = 80 + col * (subW + subGap);
+      const x = contentLeft + col * (subW + subGap);
       const h = await drawValueCard(ctx, {
         x,
         y: rowY,
@@ -243,44 +252,56 @@ export async function downloadTeamReportImage(input: {
   const pillars: Pillar[] = ["heart", "work", "growth"];
   const total =
     pillars.reduce((s, p) => s + (input.snapshot.pillarAll[p] ?? 0), 0) || 1;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
   ctx.fillStyle = "#ffe28a";
   ctx.font = "700 22px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
-  ctx.fillText("柱の偏り（メイン＋サブ）", 80, y);
+  ctx.fillText("柱の偏り（メイン＋サブ）", contentLeft, y);
   y += 28;
+
+  const labelColW = 160;
+  const countColW = 40;
+  const barX = contentLeft + labelColW;
+  const barW = contentWidth - labelColW - countColW - 16;
+  const countX = contentRight;
+
   for (const p of pillars) {
     const count = input.snapshot.pillarAll[p] ?? 0;
     const ratio = count / total;
+    ctx.textAlign = "left";
     ctx.fillStyle = "#dce6ff";
     ctx.font = "600 20px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
-    ctx.fillText(PILLAR_LABEL[p], 80, y + 18);
+    ctx.fillText(PILLAR_LABEL[p], contentLeft, y + 18);
     ctx.fillStyle = "rgba(255,255,255,0.12)";
-    roundRect(ctx, 280, y, 680, 24, 10);
+    roundRect(ctx, barX, y, barW, 24, 10);
     ctx.fill();
     ctx.fillStyle = PILLAR_COLORS[p];
-    roundRect(ctx, 280, y, Math.max(8, 680 * ratio), 24, 10);
+    roundRect(ctx, barX, y, Math.max(8, barW * ratio), 24, 10);
     ctx.fill();
+    ctx.textAlign = "right";
     ctx.fillStyle = "#f4f7ff";
-    ctx.fillText(`${count}`, 980, y + 18);
+    ctx.fillText(`${count}`, countX, y + 18);
     y += 42;
   }
 
   y += 12;
   const boxH = Math.min(280, height - 80 - y - 40);
   ctx.fillStyle = "rgba(10, 12, 28, 0.55)";
-  roundRect(ctx, 80, y, width - 160, boxH, 24);
+  roundRect(ctx, contentLeft, y, contentWidth, boxH, 24);
   ctx.fill();
   ctx.strokeStyle = "rgba(255,226,138,0.45)";
   ctx.lineWidth = 2;
-  roundRect(ctx, 80, y, width - 160, boxH, 24);
+  roundRect(ctx, contentLeft, y, contentWidth, boxH, 24);
   ctx.stroke();
 
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
   ctx.fillStyle = "#ffe28a";
   ctx.font = "700 22px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
-  ctx.textAlign = "center";
   ctx.fillText("チーム分析", width / 2, y + 36);
 
   const analysis = (input.analysis || "（分析なし）").trim();
-  const lines = wrapSimple(ctx, analysis, width - 240, 22);
+  const lines = wrapSimple(ctx, analysis, contentWidth - 80, 22);
   ctx.fillStyle = "#eef2ff";
   ctx.font = "500 22px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
   ctx.textBaseline = "top";
@@ -292,6 +313,7 @@ export async function downloadTeamReportImage(input: {
   const date = input.createdAt
     ? new Date(input.createdAt).toLocaleDateString("ja-JP")
     : new Date().toLocaleDateString("ja-JP");
+  ctx.textAlign = "center";
   ctx.fillStyle = "#98a8d0";
   ctx.font = "500 20px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
   ctx.fillText(date, width / 2, height - 55);
