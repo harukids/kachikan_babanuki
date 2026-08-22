@@ -3,7 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { LineArtCoverBg } from "@/components/LineArtCoverBg";
 import {
-  WALLOPAPER_PATTERN_IDS,
+  WALLPAPER_PATTERN_IDS,
   type WallpaperPatternId,
 } from "@/lib/line-art-wallpapers";
 
