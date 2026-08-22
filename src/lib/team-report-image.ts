@@ -14,6 +14,11 @@ const PILLAR_COLORS: Record<Pillar, string> = {
 };
 
 const CACHE = "20260822i";
+const WIDTH = 1080;
+const FRAME = 40;
+const CONTENT_LEFT = 80;
+const CONTENT_RIGHT = WIDTH - 80;
+const CONTENT_WIDTH = CONTENT_RIGHT - CONTENT_LEFT;
 
 function findIdByLabel(label: string | null | undefined): string | null {
   if (!label) return null;
@@ -33,6 +38,28 @@ function loadImage(src: string): Promise<HTMLImageElement | null> {
   });
 }
 
+function valueCardHeight(w: number, hasOwner: boolean, compact: boolean): number {
+  const pad = compact ? 10 : 14;
+  const artSize = w - pad * 2;
+  const captionH = hasOwner ? (compact ? 44 : 52) : compact ? 28 : 36;
+  return pad + artSize + captionH;
+}
+
+function gridHeight(opts: {
+  count: number;
+  cols: number;
+  cardW: number;
+  gap: number;
+  hasOwner: boolean;
+  compact: boolean;
+}): number {
+  const { count, cols, cardW, gap, hasOwner, compact } = opts;
+  if (count <= 0) return 0;
+  const rows = Math.ceil(count / cols);
+  const h = valueCardHeight(cardW, hasOwner, compact);
+  return rows * h + (rows - 1) * gap;
+}
+
 async function drawValueCard(
   ctx: CanvasRenderingContext2D,
   opts: {
@@ -50,8 +77,7 @@ async function drawValueCard(
   const tone = getValueCardPillarTone(card?.pillar);
   const pad = compact ? 10 : 14;
   const artSize = w - pad * 2;
-  const captionH = owner ? (compact ? 44 : 52) : compact ? 28 : 36;
-  const h = pad + artSize + captionH;
+  const h = valueCardHeight(w, Boolean(owner), Boolean(compact));
 
   ctx.save();
 
@@ -125,13 +151,8 @@ export async function downloadTeamReportImage(input: {
   analysis: string;
   createdAt?: string;
 }): Promise<void> {
-  const width = 1080;
-  const height = 1600;
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("画像を作れませんでした");
+  const measure = document.createElement("canvas").getContext("2d");
+  if (!measure) throw new Error("画像を作れませんでした");
 
   if (typeof document !== "undefined" && document.fonts?.ready) {
     try {
@@ -141,97 +162,149 @@ export async function downloadTeamReportImage(input: {
     }
   }
 
-  const bg = ctx.createLinearGradient(0, 0, width, height);
+  const members = input.snapshot.members.filter((m) => memberMainId(m));
+  const mainCols = Math.min(4, Math.max(2, members.length || 2));
+  const mainGap = 20;
+  const mainCardW = (CONTENT_WIDTH - mainGap * (mainCols - 1)) / mainCols;
+
+  const subs = resolveSubCardsWithOwners(input.snapshot);
+  const subCols =
+    subs.length > 0 ? Math.min(6, Math.max(3, subs.length)) : 0;
+  const subGap = 14;
+  const subCardW =
+    subCols > 0
+      ? (CONTENT_WIDTH - subGap * (subCols - 1)) / subCols
+      : 0;
+
+  const analysis = (input.analysis || "（分析なし）").trim();
+  measure.font = "500 22px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
+  const analysisLines = wrapSimple(measure, analysis, CONTENT_WIDTH - 80, 22);
+  const analysisLineH = 30;
+  const analysisPadTop = 56;
+  const analysisPadBottom = 28;
+  const analysisBoxH = Math.max(
+    120,
+    analysisPadTop + analysisLines.length * analysisLineH + analysisPadBottom,
+  );
+
+  let yCursor = 250;
+  yCursor += 28; // main heading
+  yCursor += gridHeight({
+    count: members.length,
+    cols: mainCols,
+    cardW: mainCardW,
+    gap: mainGap,
+    hasOwner: true,
+    compact: false,
+  });
+  yCursor += 10;
+
+  if (subs.length > 0) {
+    yCursor += 24; // sub heading
+    yCursor += gridHeight({
+      count: subs.length,
+      cols: subCols,
+      cardW: subCardW,
+      gap: subGap,
+      hasOwner: true,
+      compact: true,
+    });
+    yCursor += 8;
+  }
+
+  yCursor += 28; // pillar heading
+  yCursor += 42 * 3; // three bars
+  yCursor += 12;
+  yCursor += analysisBoxH;
+  yCursor += 70; // date + bottom padding inside frame
+
+  const height = Math.max(1600, Math.ceil(yCursor + FRAME));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = WIDTH;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("画像を作れませんでした");
+
+  const bg = ctx.createLinearGradient(0, 0, WIDTH, height);
   bg.addColorStop(0, "#0b1020");
   bg.addColorStop(0.45, "#161a38");
   bg.addColorStop(1, "#1a1230");
   ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, width, height);
+  ctx.fillRect(0, 0, WIDTH, height);
 
   ctx.strokeStyle = "rgba(255,255,255,0.22)";
   ctx.lineWidth = 4;
-  roundRect(ctx, 40, 40, width - 80, height - 80, 36);
+  roundRect(ctx, FRAME, FRAME, WIDTH - FRAME * 2, height - FRAME * 2, 36);
   ctx.stroke();
 
   ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
   ctx.fillStyle = "#7ef0d4";
   ctx.font = "600 26px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
-  ctx.fillText("Value Drop · チームレポート", width / 2, 100);
+  ctx.fillText("Value Drop · チームレポート", WIDTH / 2, 100);
 
   ctx.fillStyle = "#f4f7ff";
   ctx.font = "700 44px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
-  ctx.fillText(input.groupLabel, width / 2, 160);
+  ctx.fillText(input.groupLabel, WIDTH / 2, 160);
 
   ctx.fillStyle = "#b7c0d9";
   ctx.font = "500 22px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
   ctx.fillText(
     `部屋 ${input.roomCode} · ${input.snapshot.memberCount}人`,
-    width / 2,
+    WIDTH / 2,
     205,
   );
 
   let y = 250;
-  const contentLeft = 80;
-  const contentRight = width - 80;
-  const contentWidth = contentRight - contentLeft;
-
   ctx.textAlign = "left";
-  ctx.textBaseline = "alphabetic";
   ctx.fillStyle = "#ffe28a";
   ctx.font = "700 24px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
-  ctx.fillText("このチームのメイン価値観", contentLeft, y);
+  ctx.fillText("このチームのメイン価値観", CONTENT_LEFT, y);
   y += 28;
 
-  const members = input.snapshot.members;
-  const cols = Math.min(4, Math.max(2, members.length || 2));
-  const gap = 20;
-  const cardW = (contentWidth - gap * (cols - 1)) / cols;
   let col = 0;
   let rowY = y;
   let rowH = 0;
   for (const m of members) {
     const mainId = memberMainId(m);
     if (!mainId) continue;
-    const x = contentLeft + col * (cardW + gap);
+    const x = CONTENT_LEFT + col * (mainCardW + mainGap);
     const h = await drawValueCard(ctx, {
       x,
       y: rowY,
-      w: cardW,
+      w: mainCardW,
       cardId: mainId,
       title: m.mainLabel ?? getCard(mainId)?.label ?? "",
       owner: m.displayName,
     });
     rowH = Math.max(rowH, h);
     col += 1;
-    if (col >= cols) {
+    if (col >= mainCols) {
       col = 0;
-      rowY += rowH + gap;
+      rowY += rowH + mainGap;
       rowH = 0;
     }
   }
-  if (col > 0) rowY += rowH + gap;
+  if (col > 0) rowY += rowH + mainGap;
   y = rowY + 10;
 
-  const subs = resolveSubCardsWithOwners(input.snapshot);
   if (subs.length > 0) {
     ctx.textAlign = "left";
     ctx.textBaseline = "alphabetic";
     ctx.fillStyle = "#ffe28a";
     ctx.font = "700 22px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
-    ctx.fillText("サブ", contentLeft, y);
+    ctx.fillText("サブ", CONTENT_LEFT, y);
     y += 24;
-    const subCols = Math.min(6, Math.max(3, subs.length));
-    const subGap = 14;
-    const subW = (contentWidth - subGap * (subCols - 1)) / subCols;
     col = 0;
     rowY = y;
     rowH = 0;
-    for (const s of subs.slice(0, 12)) {
-      const x = contentLeft + col * (subW + subGap);
+    for (const s of subs) {
+      const x = CONTENT_LEFT + col * (subCardW + subGap);
       const h = await drawValueCard(ctx, {
         x,
         y: rowY,
-        w: subW,
+        w: subCardW,
         cardId: s.cardId,
         title: s.label,
         owner: s.owners.join("、"),
@@ -256,14 +329,14 @@ export async function downloadTeamReportImage(input: {
   ctx.textBaseline = "alphabetic";
   ctx.fillStyle = "#ffe28a";
   ctx.font = "700 22px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
-  ctx.fillText("柱の偏り（メイン＋サブ）", contentLeft, y);
+  ctx.fillText("柱の偏り（メイン＋サブ）", CONTENT_LEFT, y);
   y += 28;
 
   const labelColW = 160;
   const countColW = 40;
-  const barX = contentLeft + labelColW;
-  const barW = contentWidth - labelColW - countColW - 16;
-  const countX = contentRight;
+  const barX = CONTENT_LEFT + labelColW;
+  const barW = CONTENT_WIDTH - labelColW - countColW - 16;
+  const countX = CONTENT_RIGHT;
 
   for (const p of pillars) {
     const count = input.snapshot.pillarAll[p] ?? 0;
@@ -271,7 +344,7 @@ export async function downloadTeamReportImage(input: {
     ctx.textAlign = "left";
     ctx.fillStyle = "#dce6ff";
     ctx.font = "600 20px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
-    ctx.fillText(PILLAR_LABEL[p], contentLeft, y + 18);
+    ctx.fillText(PILLAR_LABEL[p], CONTENT_LEFT, y + 18);
     ctx.fillStyle = "rgba(255,255,255,0.12)";
     roundRect(ctx, barX, y, barW, 24, 10);
     ctx.fill();
@@ -285,28 +358,25 @@ export async function downloadTeamReportImage(input: {
   }
 
   y += 12;
-  const boxH = Math.min(280, height - 80 - y - 40);
   ctx.fillStyle = "rgba(10, 12, 28, 0.55)";
-  roundRect(ctx, contentLeft, y, contentWidth, boxH, 24);
+  roundRect(ctx, CONTENT_LEFT, y, CONTENT_WIDTH, analysisBoxH, 24);
   ctx.fill();
   ctx.strokeStyle = "rgba(255,226,138,0.45)";
   ctx.lineWidth = 2;
-  roundRect(ctx, contentLeft, y, contentWidth, boxH, 24);
+  roundRect(ctx, CONTENT_LEFT, y, CONTENT_WIDTH, analysisBoxH, 24);
   ctx.stroke();
 
   ctx.textAlign = "center";
   ctx.textBaseline = "alphabetic";
   ctx.fillStyle = "#ffe28a";
   ctx.font = "700 22px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
-  ctx.fillText("チーム分析", width / 2, y + 36);
+  ctx.fillText("チーム分析", WIDTH / 2, y + 36);
 
-  const analysis = (input.analysis || "（分析なし）").trim();
-  const lines = wrapSimple(ctx, analysis, contentWidth - 80, 22);
   ctx.fillStyle = "#eef2ff";
   ctx.font = "500 22px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
   ctx.textBaseline = "top";
-  lines.slice(0, 7).forEach((line, i) => {
-    ctx.fillText(line, width / 2, y + 56 + i * 30);
+  analysisLines.forEach((line, i) => {
+    ctx.fillText(line, WIDTH / 2, y + analysisPadTop + i * analysisLineH);
   });
   ctx.textBaseline = "alphabetic";
 
@@ -316,7 +386,7 @@ export async function downloadTeamReportImage(input: {
   ctx.textAlign = "center";
   ctx.fillStyle = "#98a8d0";
   ctx.font = "500 20px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
-  ctx.fillText(date, width / 2, height - 55);
+  ctx.fillText(date, WIDTH / 2, height - 55);
 
   await new Promise<void>((resolve, reject) => {
     canvas.toBlob((blob) => {
