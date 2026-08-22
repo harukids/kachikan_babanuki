@@ -3,11 +3,14 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { PILLAR_LABEL } from "@/lib/deck";
+import { DECK, getCard, PILLAR_LABEL } from "@/lib/deck";
 import { downloadTeamReportImage } from "@/lib/team-report-image";
-import type { TeamSnapshot } from "@/lib/team-report";
+import {
+  resolveMainAndSubCardIds,
+  type TeamMemberSnapshot,
+  type TeamSnapshot,
+} from "@/lib/team-report";
 import type { Pillar } from "@/lib/types";
-import { TeamReportArtBg } from "@/components/TeamReportArtBg";
 
 type ReportPayload = {
   id: string;
@@ -18,11 +21,62 @@ type ReportPayload = {
   createdAt: string;
 };
 
+const CACHE = "20260822i";
+
 const PILLAR_BAR: Record<Pillar, string> = {
   heart: "bg-[#ff8ec8]",
   work: "bg-[#6ea8ff]",
   growth: "bg-[#7ef0d4]",
 };
+
+function findIdByLabel(label: string | null | undefined): string | null {
+  if (!label) return null;
+  return DECK.find((c) => c.label === label)?.id ?? null;
+}
+
+function memberMainId(m: TeamMemberSnapshot): string | null {
+  return m.mainCardId || findIdByLabel(m.mainLabel);
+}
+
+function ValueCardTile({
+  cardId,
+  caption,
+  compact = false,
+}: {
+  cardId: string;
+  caption?: string;
+  compact?: boolean;
+}) {
+  const card = getCard(cardId);
+  if (!card) return null;
+  return (
+    <figure
+      className={`overflow-hidden rounded-2xl border border-line bg-[#12122a] ${
+        compact ? "p-2" : "p-3"
+      }`}
+    >
+      <div
+        className={`flex aspect-square items-center justify-center rounded-xl bg-gradient-to-br from-[#1a2040] to-[#0c1020] ${
+          compact ? "p-2" : "p-3"
+        }`}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={`/illustrations/v3/${card.id}.svg?v=${CACHE}`}
+          alt={card.label}
+          className="h-full w-full object-contain opacity-95"
+        />
+      </div>
+      <figcaption
+        className={`mt-2 text-center font-semibold leading-snug ${
+          compact ? "text-[11px]" : "text-sm"
+        }`}
+      >
+        {caption ?? card.label}
+      </figcaption>
+    </figure>
+  );
+}
 
 export default function TeamReportPage() {
   const params = useParams<{ id: string }>();
@@ -65,6 +119,14 @@ export default function TeamReportPage() {
     return Math.max(1, s.heart + s.work + s.growth);
   }, [report]);
 
+  const { subs } = useMemo(
+    () =>
+      report
+        ? resolveMainAndSubCardIds(report.snapshot)
+        : { mains: [] as string[], subs: [] as string[] },
+    [report],
+  );
+
   if (loading) {
     return (
       <main className="relative z-[1] mx-auto flex max-w-lg flex-1 items-center justify-center p-8 text-muted">
@@ -85,11 +147,12 @@ export default function TeamReportPage() {
   }
 
   const pillars: Pillar[] = ["heart", "work", "growth"];
+  const n = report.snapshot.members.length;
+  const mainCols =
+    n <= 2 ? "grid-cols-2" : n === 3 ? "grid-cols-3" : "grid-cols-2 sm:grid-cols-4";
 
   return (
-    <>
-      <TeamReportArtBg snapshot={report.snapshot} />
-      <main className="relative z-[1] mx-auto flex w-full max-w-lg flex-1 flex-col gap-5 px-4 py-8 sm:gap-6 sm:py-10">
+    <main className="relative z-[1] mx-auto flex w-full max-w-lg flex-1 flex-col gap-5 px-4 py-8 sm:gap-6 sm:py-10">
       <header className="space-y-2">
         <p className="text-xs font-semibold tracking-wide text-mint">
           Value Drop · チームレポート
@@ -99,6 +162,36 @@ export default function TeamReportPage() {
           部屋 {report.roomCode} · {report.snapshot.memberCount}人
         </p>
       </header>
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold text-accent">
+          このチームのメイン価値観
+        </h2>
+        <div className={`grid gap-2 ${mainCols}`}>
+          {report.snapshot.members.map((m) => {
+            const mainId = memberMainId(m);
+            if (!mainId) return null;
+            return (
+              <ValueCardTile
+                key={m.id}
+                cardId={mainId}
+                caption={`${m.mainLabel ?? getCard(mainId)?.label ?? ""} · ${m.displayName}`}
+              />
+            );
+          })}
+        </div>
+      </section>
+
+      {subs.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-sm font-semibold text-accent">サブ</h2>
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+            {subs.map((sid) => (
+              <ValueCardTile key={sid} cardId={sid} compact />
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="space-y-3 rounded-2xl border border-line bg-panel p-4">
         <h2 className="text-sm font-semibold text-accent">
@@ -125,24 +218,6 @@ export default function TeamReportPage() {
               </li>
             );
           })}
-        </ul>
-      </section>
-
-      <section className="space-y-3 rounded-2xl border border-line bg-panel p-4">
-        <h2 className="text-sm font-semibold text-accent">各自のメイン</h2>
-        <ul className="space-y-2">
-          {report.snapshot.members.map((m) => (
-            <li
-              key={m.id}
-              className="flex items-center justify-between gap-2 rounded-xl bg-background px-3 py-2 text-sm"
-            >
-              <span className="font-semibold">{m.displayName}</span>
-              <span className="text-muted">
-                {m.mainLabel ?? "—"}
-                {m.mainPillar ? ` · ${PILLAR_LABEL[m.mainPillar]}` : ""}
-              </span>
-            </li>
-          ))}
         </ul>
       </section>
 
@@ -207,6 +282,5 @@ export default function TeamReportPage() {
         トップへ
       </Link>
     </main>
-    </>
   );
 }
