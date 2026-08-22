@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { getCard, PILLAR_LABEL } from "@/lib/deck";
+import { getCard } from "@/lib/deck";
 import { getValueCardPillarTone } from "@/lib/result-poster";
-import type { Pillar } from "@/lib/types";
 
 const CACHE = "20260822i";
 
@@ -26,30 +25,48 @@ const SAMPLE_MEMBERS = [
   },
 ] as const;
 
-const PILLAR_BAR: Record<Pillar, string> = {
-  heart: "bg-[#ff8ec8]",
-  work: "bg-[#6ea8ff]",
-  growth: "bg-[#7ef0d4]",
-};
+type Layout = "below" | "above";
 
 function ValueCard({
   cardId,
   owner,
   compact = false,
+  layout,
 }: {
   cardId: string;
   owner?: string;
   compact?: boolean;
+  layout: Layout;
 }) {
   const card = getCard(cardId);
   if (!card) return null;
   const tone = getValueCardPillarTone(card.pillar);
+  const title = (
+    <p
+      className={`font-semibold leading-snug ${
+        compact ? "text-[11px]" : "text-sm"
+      }`}
+    >
+      {card.label}
+    </p>
+  );
+  const ownerLine = owner ? (
+    <p className={`text-muted ${compact ? "text-[9px]" : "text-[11px]"}`}>
+      {owner}
+    </p>
+  ) : null;
+
   return (
     <figure
       className={`overflow-hidden rounded-2xl border ${tone.figure} ${
         compact ? "p-2" : "p-3"
       }`}
     >
+      {layout === "above" && (
+        <div className={`mb-2 text-center ${compact ? "space-y-0" : "space-y-0.5"}`}>
+          {title}
+        </div>
+      )}
       <div
         className={`flex aspect-square items-center justify-center rounded-xl ${tone.art} ${
           compact ? "p-2" : "p-4"
@@ -62,157 +79,95 @@ function ValueCard({
           className="h-full w-full object-contain opacity-95"
         />
       </div>
-      <figcaption className="mt-2 space-y-0.5 text-center">
-        <p
-          className={`font-semibold leading-snug ${
-            compact ? "text-[11px]" : "text-sm"
-          }`}
-        >
-          {card.label}
-        </p>
-        {owner && (
-          <p className={`text-muted ${compact ? "text-[9px]" : "text-[11px]"}`}>
-            {owner}
-          </p>
+      <figcaption
+        className={`mt-2 text-center ${
+          layout === "below" ? "space-y-0.5" : ""
+        }`}
+      >
+        {layout === "below" ? (
+          <>
+            {title}
+            {ownerLine}
+          </>
+        ) : (
+          ownerLine
         )}
       </figcaption>
     </figure>
   );
 }
 
-export default function ReportSamplePage() {
-  const mains = SAMPLE_MEMBERS.map((m) => m.mainId);
-  const pillarCount = { heart: 0, work: 0, growth: 0 } as Record<Pillar, number>;
-  for (const m of SAMPLE_MEMBERS) {
-    const main = getCard(m.mainId);
-    if (main) pillarCount[main.pillar] += 1;
-    for (const sid of m.subIds) {
-      const s = getCard(sid);
-      if (s) pillarCount[s.pillar] += 1;
-    }
-  }
-  const total = Math.max(1, pillarCount.heart + pillarCount.work + pillarCount.growth);
-
+function CardBlock({ layout }: { layout: Layout }) {
   return (
-    <main className="relative z-[1] mx-auto flex w-full max-w-lg flex-1 flex-col gap-10 px-4 py-10">
-      <header className="space-y-2">
-        <p className="text-xs font-semibold tracking-wide text-mint">見本 · デザイン比較</p>
-        <h1 className="text-2xl font-bold">チームレポートの見せ方</h1>
-        <p className="text-sm leading-relaxed text-muted">
-          カード名（価値観）を主、持ち主を副にしたレイアウト案です。
-        </p>
-        <Link href="/illustrations/v3" className="text-sm text-mint underline">
-          v3ギャラリーを見る
-        </Link>
-      </header>
-
-      {/* A: 現状寄りの背景散らし */}
-      <section className="relative overflow-hidden rounded-2xl border border-line bg-panel p-4">
-        <p className="relative z-[1] mb-3 text-xs font-semibold text-accent">
-          A. 背景に薄く散らす（いま近い）
-        </p>
-        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-          {mains.map((id, i) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              key={id}
-              src={`/illustrations/v3/${id}.svg?v=${CACHE}`}
-              alt=""
-              className="absolute opacity-[0.16]"
-              style={{
-                width: 160,
-                height: 160,
-                top: `${12 + i * 28}%`,
-                left: i === 1 ? "55%" : i === 2 ? "8%" : "28%",
-                transform: `rotate(${[-12, 10, -8][i]}deg)`,
-              }}
+    <>
+      <div className="space-y-2">
+        <h3 className="text-sm font-semibold text-accent">メイン</h3>
+        <div className="grid grid-cols-3 gap-2">
+          {SAMPLE_MEMBERS.map((m) => (
+            <ValueCard
+              key={m.mainId}
+              cardId={m.mainId}
+              owner={m.name}
+              layout={layout}
             />
           ))}
         </div>
-        <div className="relative z-[1] space-y-3 rounded-xl bg-background/70 p-3 backdrop-blur-[2px]">
-          <h2 className="text-lg font-bold">チーム1</h2>
-          <p className="text-sm text-muted">部屋 DEMO · 3人</p>
-          <p className="text-sm leading-relaxed text-[#e8ecff]/90">
-            このチームは創造と信頼、自由を軸にする傾向がある…（分析文）
-          </p>
+      </div>
+      <div className="space-y-2">
+        <h3 className="text-sm font-semibold text-accent">サブ</h3>
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+          {SAMPLE_MEMBERS.flatMap((m) =>
+            m.subIds.map((sid) => (
+              <ValueCard
+                key={`${layout}-${m.name}-${sid}`}
+                cardId={sid}
+                owner={m.name}
+                compact
+                layout={layout}
+              />
+            )),
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
+export default function ReportSamplePage() {
+  return (
+    <main className="relative z-[1] mx-auto flex w-full max-w-lg flex-1 flex-col gap-8 px-4 py-10">
+      <header className="space-y-2">
+        <p className="text-xs font-semibold tracking-wide text-mint">
+          見本 · キャプション位置の比較
+        </p>
+        <h1 className="text-2xl font-bold">意味と持ち主の置き方</h1>
+        <p className="text-sm leading-relaxed text-muted">
+          同じ3人チームで、下2段案と「上に意味／下に持ち主」案を並べています。
+        </p>
+      </header>
+
+      <section className="space-y-4 rounded-2xl border border-mint/40 bg-panel p-4">
+        <div className="space-y-1">
+          <p className="text-xs font-semibold text-mint">1. 下に2段（いまの案）</p>
           <p className="text-[11px] text-muted">
-            ※ 気づかれにくく、画面サイズでバランスが崩れやすい
+            絵 → 価値観名 → 持ち主。タロットの「絵が中央・名札は下」に近い。
           </p>
         </div>
+        <CardBlock layout="below" />
       </section>
 
-      {/* B: カード展示（推奨） */}
-      <section className="space-y-4 rounded-2xl border border-mint/40 bg-panel p-4 shadow-[0_0_0_1px_rgba(126,240,212,0.15)]">
+      <section className="space-y-4 rounded-2xl border border-line bg-panel p-4">
         <div className="space-y-1">
-          <p className="text-xs font-semibold text-mint">
-            B. 意味＝カード名／持ち主＝副キャプション
-          </p>
-          <h2 className="text-lg font-bold">チーム1</h2>
-          <p className="text-sm text-muted">部屋 DEMO · 3人</p>
-        </div>
-
-        <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-accent">このチームのメイン価値観</h3>
-          <div className="grid grid-cols-3 gap-2">
-            {SAMPLE_MEMBERS.map((m) => (
-              <ValueCard key={m.mainId} cardId={m.mainId} owner={m.name} />
-            ))}
-          </div>
+          <p className="text-xs font-semibold text-accent">2. 上に意味／下に持ち主</p>
           <p className="text-[11px] text-muted">
-            絵の下に価値観名、その下に持ち主（薄い文字）
+            価値観名 → 絵 → 持ち主。カード名が先に目に入る。
           </p>
         </div>
-
-        <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-accent">サブ</h3>
-          <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-            {SAMPLE_MEMBERS.flatMap((m) =>
-              m.subIds.map((sid) => (
-                <ValueCard
-                  key={`${m.name}-${sid}`}
-                  cardId={sid}
-                  owner={m.name}
-                  compact
-                />
-              )),
-            )}
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-accent">柱の偏り</h3>
-          {(["heart", "work", "growth"] as Pillar[]).map((p) => {
-            const count = pillarCount[p];
-            const pct = Math.round((count / total) * 100);
-            return (
-              <div key={p} className="space-y-1">
-                <div className="flex justify-between text-xs">
-                  <span>{PILLAR_LABEL[p]}</span>
-                  <span className="text-muted">
-                    {count}（{pct}%）
-                  </span>
-                </div>
-                <div className="h-2 overflow-hidden rounded-full bg-background">
-                  <div
-                    className={`h-full rounded-full ${PILLAR_BAR[p]}`}
-                    style={{ width: `${Math.max(4, pct)}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="space-y-1 rounded-xl border border-line bg-background/80 p-3">
-          <h3 className="text-sm font-semibold text-accent">チーム分析</h3>
-          <p className="text-sm leading-relaxed text-[#e8ecff]/90">
-            このチームは自由・創造・信頼を軸にする人が集まり、挑戦しながら関係性を大切にする傾向がある。安定より学びとつながりを優先する空気が強い。
-          </p>
-        </div>
+        <CardBlock layout="above" />
       </section>
 
       <p className="text-sm text-muted">
-        このキャプション分けでよければ、本番レポートにも同じ形で反映します。
+        どちらが読みやすいか教えてください（1 / 2）。
       </p>
 
       <Link href="/" className="text-sm text-mint underline">
