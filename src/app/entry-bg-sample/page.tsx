@@ -71,11 +71,18 @@ export default function EntryBgSamplePage() {
         </p>
         <h1 className="text-2xl font-bold">シンボル壁紙の構図</h1>
         <p className="text-sm leading-relaxed text-muted">
-          いずれも 9:16 構図の cover 方式です。散らし系とモノグラム（整列）系を並べています。各パターンの下に横長プレビューもあります。
+          いずれも 9:16 構図の cover 方式です。本番トップ／ロビーはいま
+          <span className="text-mint"> 散らし・高密度 </span>
+          を試用中なので、スマホとPCで同じURLを見比べてください。
         </p>
-        <Link href="/" className="text-sm text-mint underline">
-          トップ（いまは散らし10枚）で確認
-        </Link>
+        <div className="flex flex-wrap gap-3 text-sm">
+          <Link href="/" className="text-mint underline">
+            トップで実機確認
+          </Link>
+          <Link href="/entry-bg-sample" className="text-mint underline">
+            この見本を再読込
+          </Link>
+        </div>
       </header>
 
       {PATTERN_ORDER.map((id) => {

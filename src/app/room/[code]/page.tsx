@@ -284,7 +284,7 @@ export default function RoomPage() {
 
     return (
       <>
-        <LineArtCoverBg denser />
+        <LineArtCoverBg denser pattern="scatterDense" />
         <main className="relative z-[1] mx-auto flex w-full max-w-lg flex-1 flex-col justify-center gap-6 px-4 py-12">
         <header className="space-y-2">
           <p className="text-xs font-semibold tracking-wide text-mint">部屋 {code}</p>
@@ -343,7 +343,9 @@ export default function RoomPage() {
 
   return (
     <>
-      {room.phase === "LOBBY" && <LineArtCoverBg denser />}
+      {room.phase === "LOBBY" && (
+        <LineArtCoverBg denser pattern="scatterDense" />
+      )}
       <main className="relative z-[1] mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-8">
       <header className="space-y-1">
         <p className="text-xs font-semibold tracking-wide text-mint">部屋 {code}</p>
