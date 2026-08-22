@@ -40,16 +40,17 @@ async function drawValueCard(
     y: number;
     w: number;
     cardId: string;
-    caption: string;
+    title: string;
+    owner?: string;
     compact?: boolean;
   },
 ): Promise<number> {
-  const { x, y, w, cardId, caption, compact } = opts;
+  const { x, y, w, cardId, title, owner, compact } = opts;
   const card = getCard(cardId);
   const tone = getValueCardPillarTone(card?.pillar);
   const pad = compact ? 10 : 14;
   const artSize = w - pad * 2;
-  const captionH = compact ? (caption ? 36 : 8) : 40;
+  const captionH = owner ? (compact ? 44 : 52) : compact ? 28 : 36;
   const h = pad + artSize + captionH;
 
   const fill =
@@ -92,23 +93,25 @@ async function drawValueCard(
     );
   }
 
-  if (caption) {
-    ctx.fillStyle = "#f4f7ff";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "top";
-    ctx.font = compact
-      ? "600 16px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif"
-      : "600 18px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
-    const lines = wrapSimple(ctx, caption, w - 16, compact ? 16 : 18).slice(0, 2);
-    lines.forEach((line, i) => {
-      ctx.fillText(
-        line,
-        x + w / 2,
-        y + pad + artSize + 8 + i * (compact ? 18 : 22),
-      );
-    });
-    ctx.textBaseline = "alphabetic";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  const titleSize = compact ? 15 : 18;
+  ctx.fillStyle = "#f4f7ff";
+  ctx.font = `600 ${titleSize}px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif`;
+  const titleLines = wrapSimple(ctx, title, w - 16, titleSize).slice(0, 2);
+  let textY = y + pad + artSize + 8;
+  titleLines.forEach((line, i) => {
+    ctx.fillText(line, x + w / 2, textY + i * (titleSize + 2));
+  });
+  textY += titleLines.length * (titleSize + 2) + 2;
+
+  if (owner) {
+    ctx.fillStyle = "#98a8d0";
+    const ownerSize = compact ? 12 : 14;
+    ctx.font = `500 ${ownerSize}px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif`;
+    ctx.fillText(owner, x + w / 2, textY);
   }
+  ctx.textBaseline = "alphabetic";
 
   return h;
 }
@@ -188,7 +191,8 @@ export async function downloadTeamReportImage(input: {
       y: rowY,
       w: cardW,
       cardId: mainId,
-      caption: `${m.mainLabel ?? ""} · ${m.displayName}`,
+      title: m.mainLabel ?? getCard(mainId)?.label ?? "",
+      owner: m.displayName,
     });
     rowH = Math.max(rowH, h);
     col += 1;
@@ -220,7 +224,8 @@ export async function downloadTeamReportImage(input: {
         y: rowY,
         w: subW,
         cardId: s.cardId,
-        caption: `${s.label} · ${s.owners.join("、")}`,
+        title: s.label,
+        owner: s.owners.join("、"),
         compact: true,
       });
       rowH = Math.max(rowH, h);

@@ -41,11 +41,11 @@ function memberMainId(m: TeamMemberSnapshot): string | null {
 
 function ValueCardTile({
   cardId,
-  caption,
+  owner,
   compact = false,
 }: {
   cardId: string;
-  caption?: string;
+  owner?: string;
   compact?: boolean;
 }) {
   const card = getCard(cardId);
@@ -69,12 +69,19 @@ function ValueCardTile({
           className="h-full w-full object-contain opacity-95"
         />
       </div>
-      <figcaption
-        className={`mt-2 text-center font-semibold leading-snug ${
-          compact ? "text-[10px]" : "text-sm"
-        }`}
-      >
-        {caption ?? card.label}
+      <figcaption className="mt-2 space-y-0.5 text-center">
+        <p
+          className={`font-semibold leading-snug ${
+            compact ? "text-[11px]" : "text-sm"
+          }`}
+        >
+          {card.label}
+        </p>
+        {owner && (
+          <p className={`text-muted ${compact ? "text-[9px]" : "text-[11px]"}`}>
+            {owner}
+          </p>
+        )}
       </figcaption>
     </figure>
   );
@@ -174,7 +181,7 @@ export default function TeamReportPage() {
               <ValueCardTile
                 key={m.id}
                 cardId={mainId}
-                caption={`${m.mainLabel ?? getCard(mainId)?.label ?? ""} · ${m.displayName}`}
+                owner={m.displayName}
               />
             );
           })}
@@ -189,7 +196,7 @@ export default function TeamReportPage() {
               <ValueCardTile
                 key={s.cardId}
                 cardId={s.cardId}
-                caption={`${s.label} · ${s.owners.join("、")}`}
+                owner={s.owners.join("、")}
                 compact
               />
             ))}

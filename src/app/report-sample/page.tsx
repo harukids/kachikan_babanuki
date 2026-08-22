@@ -34,11 +34,11 @@ const PILLAR_BAR: Record<Pillar, string> = {
 
 function ValueCard({
   cardId,
-  caption,
+  owner,
   compact = false,
 }: {
   cardId: string;
-  caption?: string;
+  owner?: string;
   compact?: boolean;
 }) {
   const card = getCard(cardId);
@@ -62,18 +62,20 @@ function ValueCard({
           className="h-full w-full object-contain opacity-95"
         />
       </div>
-      <figcaption
-        className={`mt-2 text-center font-semibold ${
-          compact ? "text-xs" : "text-sm"
-        }`}
-      >
-        {caption ?? card.label}
-      </figcaption>
-      {!compact && (
-        <p className="text-center text-[10px] text-muted">
-          {PILLAR_LABEL[card.pillar]}
+      <figcaption className="mt-2 space-y-0.5 text-center">
+        <p
+          className={`font-semibold leading-snug ${
+            compact ? "text-[11px]" : "text-sm"
+          }`}
+        >
+          {card.label}
         </p>
-      )}
+        {owner && (
+          <p className={`text-muted ${compact ? "text-[9px]" : "text-[11px]"}`}>
+            {owner}
+          </p>
+        )}
+      </figcaption>
     </figure>
   );
 }
@@ -97,7 +99,7 @@ export default function ReportSamplePage() {
         <p className="text-xs font-semibold tracking-wide text-mint">見本 · デザイン比較</p>
         <h1 className="text-2xl font-bold">チームレポートの見せ方</h1>
         <p className="text-sm leading-relaxed text-muted">
-          同じ架空チーム（3人）で、背景散らし案とカード展示案を並べています。下のBがおすすめ案です。
+          カード名（価値観）を主、持ち主を副にしたレイアウト案です。
         </p>
         <Link href="/illustrations/v3" className="text-sm text-mint underline">
           v3ギャラリーを見る
@@ -142,7 +144,9 @@ export default function ReportSamplePage() {
       {/* B: カード展示（推奨） */}
       <section className="space-y-4 rounded-2xl border border-mint/40 bg-panel p-4 shadow-[0_0_0_1px_rgba(126,240,212,0.15)]">
         <div className="space-y-1">
-          <p className="text-xs font-semibold text-mint">B. カードとして見せる（おすすめ案）</p>
+          <p className="text-xs font-semibold text-mint">
+            B. 意味＝カード名／持ち主＝副キャプション
+          </p>
           <h2 className="text-lg font-bold">チーム1</h2>
           <p className="text-sm text-muted">部屋 DEMO · 3人</p>
         </div>
@@ -151,15 +155,11 @@ export default function ReportSamplePage() {
           <h3 className="text-sm font-semibold text-accent">このチームのメイン価値観</h3>
           <div className="grid grid-cols-3 gap-2">
             {SAMPLE_MEMBERS.map((m) => (
-              <ValueCard
-                key={m.mainId}
-                cardId={m.mainId}
-                caption={`${getCard(m.mainId)?.label ?? ""}\n${m.name}`.replace("\n", " · ")}
-              />
+              <ValueCard key={m.mainId} cardId={m.mainId} owner={m.name} />
             ))}
           </div>
           <p className="text-[11px] text-muted">
-            名前＋メインをカード化。誰の軸かが一目でわかる
+            絵の下に価値観名、その下に持ち主（薄い文字）
           </p>
         </div>
 
@@ -171,7 +171,7 @@ export default function ReportSamplePage() {
                 <ValueCard
                   key={`${m.name}-${sid}`}
                   cardId={sid}
-                  caption={`${getCard(sid)?.label ?? ""} · ${m.name}`}
+                  owner={m.name}
                   compact
                 />
               )),
@@ -212,7 +212,7 @@ export default function ReportSamplePage() {
       </section>
 
       <p className="text-sm text-muted">
-        気に入った方（A / B / 別案）を教えてください。そこから本番のレポートに反映します。
+        このキャプション分けでよければ、本番レポートにも同じ形で反映します。
       </p>
 
       <Link href="/" className="text-sm text-mint underline">
