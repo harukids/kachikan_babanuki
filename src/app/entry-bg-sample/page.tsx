@@ -76,11 +76,14 @@ export default function EntryBgSamplePage() {
           を試用中なので、スマホとPCで同じURLを見比べてください。
         </p>
         <div className="flex flex-wrap gap-3 text-sm">
-          <Link href="/" className="text-mint underline">
-            トップで実機確認
+          <Link href="/?bg=scatterDense" className="text-mint underline">
+            トップ·散らし高密度
           </Link>
-          <Link href="/entry-bg-sample" className="text-mint underline">
-            この見本を再読込
+          <Link href="/?bg=monogram" className="text-mint underline">
+            トップ·モノグラム
+          </Link>
+          <Link href="/?bg=monogramDense" className="text-mint underline">
+            トップ·モノグラム高密度
           </Link>
         </div>
       </header>

@@ -1,12 +1,13 @@
 "use client";
 
+import { Suspense, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { generateRoomCode, normalizeRoomCode } from "@/lib/room-code";
 import { isSupabaseConfigured, createBrowserClient } from "@/lib/supabase/client";
 import { savePlayerId } from "@/lib/player-storage";
 import { joinRoomAsGuest } from "@/lib/join-room";
 import { DECK } from "@/lib/deck";
+import { HomeEntryBg } from "@/components/HomeEntryBg";
 import { LineArtCoverBg } from "@/components/LineArtCoverBg";
 
 export default function HomePage() {
@@ -84,7 +85,9 @@ export default function HomePage() {
 
   return (
     <>
-      <LineArtCoverBg pattern="scatterDense" />
+      <Suspense fallback={<LineArtCoverBg pattern="scatterDense" />}>
+        <HomeEntryBg />
+      </Suspense>
       <main className="relative z-[1] mx-auto flex w-full max-w-lg flex-1 flex-col justify-center gap-8 px-4 py-12">
       <header className="space-y-2">
         <p className="text-sm font-semibold tracking-wide text-mint">

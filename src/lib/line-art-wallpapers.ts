@@ -15,6 +15,13 @@ export type WallpaperPatternId =
   | "monogram"
   | "monogramDense";
 
+export const WALLPAPER_PATTERN_IDS: WallpaperPatternId[] = [
+  "scatter",
+  "scatterDense",
+  "monogram",
+  "monogramDense",
+];
+
 /** 9:16 構図内の配置パターン */
 export const WALLPAPER_PATTERNS: Record<
   WallpaperPatternId,
