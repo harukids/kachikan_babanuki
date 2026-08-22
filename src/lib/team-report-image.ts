@@ -1,7 +1,6 @@
 import { DECK, PILLAR_LABEL, getCard } from "@/lib/deck";
 import {
   resolveSubCardsWithOwners,
-  type TeamMemberSnapshot,
   type TeamSnapshot,
 } from "@/lib/team-report";
 import { getValueCardPillarTone } from "@/lib/result-poster";
@@ -38,26 +37,111 @@ function loadImage(src: string): Promise<HTMLImageElement | null> {
   });
 }
 
-function valueCardHeight(w: number, hasOwner: boolean, compact: boolean): number {
-  const pad = compact ? 10 : 14;
-  const artSize = w - pad * 2;
-  const captionH = hasOwner ? (compact ? 44 : 52) : compact ? 28 : 36;
-  return pad + artSize + captionH;
+function truncateToWidth(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+): string {
+  if (!text) return "";
+  if (ctx.measureText(text).width <= maxWidth) return text;
+  const ellipsis = "…";
+  let truncated = text;
+  while (truncated.length > 0) {
+    truncated = truncated.slice(0, -1);
+    if (ctx.measureText(truncated + ellipsis).width <= maxWidth) {
+      return truncated + ellipsis;
+    }
+  }
+  return ellipsis;
 }
 
-function gridHeight(opts: {
-  count: number;
-  cols: number;
-  cardW: number;
-  gap: number;
-  hasOwner: boolean;
-  compact: boolean;
-}): number {
-  const { count, cols, cardW, gap, hasOwner, compact } = opts;
-  if (count <= 0) return 0;
-  const rows = Math.ceil(count / cols);
-  const h = valueCardHeight(cardW, hasOwner, compact);
-  return rows * h + (rows - 1) * gap;
+type CaptionPlan = {
+  pad: number;
+  artSize: number;
+  titleSize: number;
+  ownerSize: number;
+  titleLines: string[];
+  ownerLine: string | null;
+  height: number;
+};
+
+function planCaption(
+  ctx: CanvasRenderingContext2D,
+  opts: { w: number; title: string; owner?: string; compact?: boolean },
+): CaptionPlan {
+  const { w, title, owner, compact } = opts;
+  const pad = compact ? 10 : 14;
+  const artSize = w - pad * 2;
+  const titleSize = compact ? 15 : 18;
+  const ownerSize = compact ? 12 : 14;
+  const textMax = Math.max(24, w - 16);
+
+  ctx.font = `600 ${titleSize}px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif`;
+  const titleLines = wrapSimple(ctx, title || "—", textMax, titleSize).slice(
+    0,
+    2,
+  );
+
+  let ownerLine: string | null = null;
+  if (owner) {
+    ctx.font = `500 ${ownerSize}px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif`;
+    ownerLine = truncateToWidth(ctx, owner, textMax);
+  }
+
+  const titleBlock = titleLines.length * (titleSize + 2);
+  const ownerBlock = ownerLine ? ownerSize + 4 : 0;
+  const captionH = 8 + titleBlock + ownerBlock + 10;
+  const height = pad + artSize + captionH;
+
+  return {
+    pad,
+    artSize,
+    titleSize,
+    ownerSize,
+    titleLines,
+    ownerLine,
+    height,
+  };
+}
+
+function maxCardHeightInRow(
+  ctx: CanvasRenderingContext2D,
+  items: Array<{ title: string; owner?: string }>,
+  cardW: number,
+  compact: boolean,
+): number {
+  let max = 0;
+  for (const item of items) {
+    max = Math.max(
+      max,
+      planCaption(ctx, {
+        w: cardW,
+        title: item.title,
+        owner: item.owner,
+        compact,
+      }).height,
+    );
+  }
+  return max;
+}
+
+function gridBlockHeight(
+  ctx: CanvasRenderingContext2D,
+  items: Array<{ title: string; owner?: string }>,
+  cols: number,
+  cardW: number,
+  gap: number,
+  compact: boolean,
+): number {
+  if (items.length === 0) return 0;
+  const rows = Math.ceil(items.length / cols);
+  let total = 0;
+  for (let r = 0; r < rows; r++) {
+    const slice = items.slice(r * cols, r * cols + cols);
+    total += maxCardHeightInRow(ctx, slice, cardW, compact);
+    if (r < rows - 1) total += gap;
+  }
+  return total;
 }
 
 async function drawValueCard(
@@ -70,14 +154,16 @@ async function drawValueCard(
     title: string;
     owner?: string;
     compact?: boolean;
+    /** 行内で揃えるときの高さ（省略時は中身から算出） */
+    forcedHeight?: number;
   },
 ): Promise<number> {
-  const { x, y, w, cardId, title, owner, compact } = opts;
+  const { x, y, w, cardId, title, owner, compact, forcedHeight } = opts;
   const card = getCard(cardId);
   const tone = getValueCardPillarTone(card?.pillar);
-  const pad = compact ? 10 : 14;
-  const artSize = w - pad * 2;
-  const h = valueCardHeight(w, Boolean(owner), Boolean(compact));
+  const plan = planCaption(ctx, { w, title, owner, compact });
+  const h = forcedHeight ?? plan.height;
+  const { pad, artSize, titleSize, ownerSize, titleLines, ownerLine } = plan;
 
   ctx.save();
 
@@ -123,25 +209,65 @@ async function drawValueCard(
 
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
-  const titleSize = compact ? 15 : 18;
   ctx.fillStyle = "#f4f7ff";
   ctx.font = `600 ${titleSize}px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif`;
-  const titleLines = wrapSimple(ctx, title, w - 16, titleSize).slice(0, 2);
   let textY = y + pad + artSize + 8;
   titleLines.forEach((line, i) => {
     ctx.fillText(line, x + w / 2, textY + i * (titleSize + 2));
   });
   textY += titleLines.length * (titleSize + 2) + 2;
 
-  if (owner) {
+  if (ownerLine) {
     ctx.fillStyle = "#98a8d0";
-    const ownerSize = compact ? 12 : 14;
     ctx.font = `500 ${ownerSize}px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif`;
-    ctx.fillText(owner, x + w / 2, textY);
+    ctx.fillText(ownerLine, x + w / 2, textY);
   }
 
   ctx.restore();
   return h;
+}
+
+/** 末尾に余分な gap を付けず、次の y を返す */
+async function drawCardGrid(
+  ctx: CanvasRenderingContext2D,
+  opts: {
+    startY: number;
+    items: Array<{
+      cardId: string;
+      title: string;
+      owner?: string;
+    }>;
+    cols: number;
+    cardW: number;
+    gap: number;
+    compact: boolean;
+  },
+): Promise<number> {
+  const { startY, items, cols, cardW, gap, compact } = opts;
+  if (items.length === 0) return startY;
+
+  let rowY = startY;
+  const rows = Math.ceil(items.length / cols);
+  for (let r = 0; r < rows; r++) {
+    const slice = items.slice(r * cols, r * cols + cols);
+    const rowH = maxCardHeightInRow(ctx, slice, cardW, compact);
+    for (let c = 0; c < slice.length; c++) {
+      const item = slice[c]!;
+      await drawValueCard(ctx, {
+        x: CONTENT_LEFT + c * (cardW + gap),
+        y: rowY,
+        w: cardW,
+        cardId: item.cardId,
+        title: item.title,
+        owner: item.owner,
+        compact,
+        forcedHeight: rowH,
+      });
+    }
+    rowY += rowH;
+    if (r < rows - 1) rowY += gap;
+  }
+  return rowY;
 }
 
 export async function downloadTeamReportImage(input: {
@@ -162,12 +288,27 @@ export async function downloadTeamReportImage(input: {
     }
   }
 
-  const members = input.snapshot.members.filter((m) => memberMainId(m));
+  const members = input.snapshot.members
+    .map((m) => {
+      const mainId = memberMainId(m);
+      if (!mainId) return null;
+      return {
+        cardId: mainId,
+        title: m.mainLabel ?? getCard(mainId)?.label ?? "",
+        owner: m.displayName,
+      };
+    })
+    .filter(Boolean) as Array<{ cardId: string; title: string; owner: string }>;
+
   const mainCols = Math.min(4, Math.max(2, members.length || 2));
   const mainGap = 20;
   const mainCardW = (CONTENT_WIDTH - mainGap * (mainCols - 1)) / mainCols;
 
-  const subs = resolveSubCardsWithOwners(input.snapshot);
+  const subs = resolveSubCardsWithOwners(input.snapshot).map((s) => ({
+    cardId: s.cardId,
+    title: s.label,
+    owner: s.owners.join("、"),
+  }));
   const subCols =
     subs.length > 0 ? Math.min(6, Math.max(3, subs.length)) : 0;
   const subGap = 14;
@@ -177,7 +318,6 @@ export async function downloadTeamReportImage(input: {
       : 0;
 
   const analysis = (input.analysis || "（分析なし）").trim();
-  measure.font = "500 22px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
   const analysisLines = wrapSimple(measure, analysis, CONTENT_WIDTH - 80, 22);
   const analysisLineH = 30;
   const analysisPadTop = 56;
@@ -188,37 +328,37 @@ export async function downloadTeamReportImage(input: {
   );
 
   let yCursor = 250;
-  yCursor += 28; // main heading
-  yCursor += gridHeight({
-    count: members.length,
-    cols: mainCols,
-    cardW: mainCardW,
-    gap: mainGap,
-    hasOwner: true,
-    compact: false,
-  });
+  yCursor += 28;
+  yCursor += gridBlockHeight(
+    measure,
+    members,
+    mainCols,
+    mainCardW,
+    mainGap,
+    false,
+  );
   yCursor += 10;
 
   if (subs.length > 0) {
-    yCursor += 24; // sub heading
-    yCursor += gridHeight({
-      count: subs.length,
-      cols: subCols,
-      cardW: subCardW,
-      gap: subGap,
-      hasOwner: true,
-      compact: true,
-    });
+    yCursor += 24;
+    yCursor += gridBlockHeight(
+      measure,
+      subs,
+      subCols,
+      subCardW,
+      subGap,
+      true,
+    );
     yCursor += 8;
   }
 
-  yCursor += 28; // pillar heading
-  yCursor += 42 * 3; // three bars
+  yCursor += 28;
+  yCursor += 42 * 3;
   yCursor += 12;
   yCursor += analysisBoxH;
-  yCursor += 70; // date + bottom padding inside frame
+  yCursor += 70;
 
-  const height = Math.max(1600, Math.ceil(yCursor + FRAME));
+  const height = Math.max(1600, Math.ceil(yCursor + FRAME + 24));
 
   const canvas = document.createElement("canvas");
   canvas.width = WIDTH;
@@ -263,31 +403,15 @@ export async function downloadTeamReportImage(input: {
   ctx.fillText("このチームのメイン価値観", CONTENT_LEFT, y);
   y += 28;
 
-  let col = 0;
-  let rowY = y;
-  let rowH = 0;
-  for (const m of members) {
-    const mainId = memberMainId(m);
-    if (!mainId) continue;
-    const x = CONTENT_LEFT + col * (mainCardW + mainGap);
-    const h = await drawValueCard(ctx, {
-      x,
-      y: rowY,
-      w: mainCardW,
-      cardId: mainId,
-      title: m.mainLabel ?? getCard(mainId)?.label ?? "",
-      owner: m.displayName,
-    });
-    rowH = Math.max(rowH, h);
-    col += 1;
-    if (col >= mainCols) {
-      col = 0;
-      rowY += rowH + mainGap;
-      rowH = 0;
-    }
-  }
-  if (col > 0) rowY += rowH + mainGap;
-  y = rowY + 10;
+  y = await drawCardGrid(ctx, {
+    startY: y,
+    items: members,
+    cols: mainCols,
+    cardW: mainCardW,
+    gap: mainGap,
+    compact: false,
+  });
+  y += 10;
 
   if (subs.length > 0) {
     ctx.textAlign = "left";
@@ -296,30 +420,15 @@ export async function downloadTeamReportImage(input: {
     ctx.font = "700 22px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
     ctx.fillText("サブ", CONTENT_LEFT, y);
     y += 24;
-    col = 0;
-    rowY = y;
-    rowH = 0;
-    for (const s of subs) {
-      const x = CONTENT_LEFT + col * (subCardW + subGap);
-      const h = await drawValueCard(ctx, {
-        x,
-        y: rowY,
-        w: subCardW,
-        cardId: s.cardId,
-        title: s.label,
-        owner: s.owners.join("、"),
-        compact: true,
-      });
-      rowH = Math.max(rowH, h);
-      col += 1;
-      if (col >= subCols) {
-        col = 0;
-        rowY += rowH + subGap;
-        rowH = 0;
-      }
-    }
-    if (col > 0) rowY += rowH + subGap;
-    y = rowY + 8;
+    y = await drawCardGrid(ctx, {
+      startY: y,
+      items: subs,
+      cols: subCols,
+      cardW: subCardW,
+      gap: subGap,
+      compact: true,
+    });
+    y += 8;
   }
 
   const pillars: Pillar[] = ["heart", "work", "growth"];
