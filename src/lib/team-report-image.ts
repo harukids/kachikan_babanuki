@@ -47,27 +47,27 @@ export async function downloadTeamReportImage(input: {
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, width, height);
 
-  // メインは存在感（少し抑えめ）、サブは装飾寄りに一段階大きく
+  // メインは少し抑えめ、サブは装飾として一段大きく
   const { mains, subs } = resolveMainAndSubCardIds(input.snapshot);
   const mainLayouts = [
-    { x: 300, y: 40, s: 300, r: -10 },
-    { x: 720, y: 220, s: 280, r: 14 },
-    { x: 40, y: 460, s: 290, r: -16 },
-    { x: 700, y: 700, s: 270, r: 11 },
-    { x: 80, y: 920, s: 260, r: -8 },
-    { x: 620, y: 1080, s: 250, r: 9 },
+    { x: 380, y: 180, s: 300, r: -8 },
+    { x: 60, y: 440, s: 270, r: 14 },
+    { x: 720, y: 420, s: 280, r: -16 },
+    { x: 220, y: 800, s: 250, r: 10 },
+    { x: 640, y: 780, s: 260, r: -12 },
+    { x: 380, y: 1000, s: 240, r: 6 },
   ];
   const subLayouts = [
-    { x: 10, y: 40, s: 130, r: -24 },
-    { x: 920, y: 100, s: 124, r: 20 },
-    { x: 20, y: 320, s: 118, r: 26 },
-    { x: 940, y: 400, s: 128, r: -18 },
-    { x: 0, y: 640, s: 120, r: -22 },
-    { x: 950, y: 720, s: 126, r: 22 },
-    { x: 30, y: 1000, s: 116, r: 14 },
-    { x: 930, y: 1080, s: 122, r: -18 },
-    { x: 480, y: 20, s: 110, r: 8 },
-    { x: 500, y: 1180, s: 112, r: -10 },
+    { x: 10, y: 50, s: 140, r: -22 },
+    { x: 900, y: 70, s: 130, r: 18 },
+    { x: 20, y: 260, s: 125, r: 26 },
+    { x: 920, y: 280, s: 135, r: -14 },
+    { x: 0, y: 600, s: 130, r: -20 },
+    { x: 930, y: 620, s: 125, r: 22 },
+    { x: 30, y: 960, s: 120, r: 12 },
+    { x: 910, y: 980, s: 130, r: -18 },
+    { x: 470, y: 30, s: 115, r: 8 },
+    { x: 490, y: 1160, s: 120, r: -10 },
   ];
 
   for (let i = 0; i < Math.min(mains.length, mainLayouts.length); i++) {
@@ -86,7 +86,7 @@ export async function downloadTeamReportImage(input: {
     if (!img) continue;
     const L = subLayouts[i];
     ctx.save();
-    ctx.globalAlpha = 0.1;
+    ctx.globalAlpha = 0.12;
     ctx.translate(L.x + L.s / 2, L.y + L.s / 2);
     ctx.rotate((L.r * Math.PI) / 180);
     ctx.drawImage(img, -L.s / 2, -L.s / 2, L.s, L.s);

@@ -162,22 +162,22 @@ export default function AdminReportsPage() {
   }
 
   return (
-    <main className="relative z-[1] mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-10">
-      <header className="space-y-1">
+    <main className="relative z-[1] mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8 sm:gap-6 sm:py-10">
+      <header className="space-y-1.5">
         <p className="text-xs font-semibold tracking-wide text-mint">Admin</p>
-        <h1 className="text-2xl font-bold">チームレポート</h1>
-        <p className="text-sm text-muted">
+        <h1 className="text-xl font-bold sm:text-2xl">チームレポート</h1>
+        <p className="text-sm leading-relaxed text-muted">
           結果フェーズ以降の部屋を読み込み、最大{MAX_TEAM_GROUPS}
           チームに振り分けてレポートを生成します。
         </p>
       </header>
 
       <section className="space-y-3 rounded-2xl border border-line bg-panel p-4">
-        <label className="block space-y-1">
+        <label className="block space-y-1.5">
           <span className="text-sm text-muted">部屋コード</span>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <input
-              className="min-w-[8rem] flex-1 rounded-xl border border-line bg-background px-3 py-2 tracking-[0.15em]"
+              className="w-full flex-1 rounded-xl border border-line bg-background px-3 py-2.5 tracking-[0.15em] sm:py-2"
               value={roomCode}
               onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
               placeholder="AB3K9"
@@ -186,7 +186,7 @@ export default function AdminReportsPage() {
             <button
               type="button"
               disabled={busy || !roomCode.trim()}
-              className="rounded-xl border border-line px-4 py-2 text-sm disabled:opacity-40"
+              className="w-full shrink-0 rounded-xl border border-line px-4 py-2.5 text-sm sm:w-auto sm:py-2 disabled:opacity-40"
               onClick={() => void loadRoom()}
             >
               読み込む
@@ -209,9 +209,9 @@ export default function AdminReportsPage() {
               return (
                 <li
                   key={p.id}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-background px-3 py-2"
+                  className="flex flex-col gap-2 rounded-xl bg-background px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:py-2"
                 >
-                  <div>
+                  <div className="min-w-0">
                     <p className="font-semibold">{p.display_name}</p>
                     <p className="text-xs text-muted">
                       メイン: {main?.label ?? "—"}
@@ -219,7 +219,7 @@ export default function AdminReportsPage() {
                     </p>
                   </div>
                   <select
-                    className="rounded-lg border border-line bg-panel px-2 py-1 text-sm"
+                    className="w-full rounded-lg border border-line bg-panel px-3 py-2.5 text-sm sm:w-auto sm:min-w-[8.5rem] sm:py-1.5"
                     value={assignments[p.id] ?? 0}
                     onChange={(e) =>
                       setAssignments((prev) => ({
@@ -244,7 +244,7 @@ export default function AdminReportsPage() {
           <button
             type="button"
             disabled={busy}
-            className="w-full rounded-xl bg-gradient-to-r from-[#6ea8ff] via-[#ff8ec8] to-[#ffb086] px-4 py-3 text-sm font-bold text-[#12122a] disabled:opacity-40"
+            className="w-full rounded-xl bg-gradient-to-r from-[#6ea8ff] via-[#ff8ec8] to-[#ffb086] px-4 py-3.5 text-sm font-bold text-[#12122a] disabled:opacity-40"
             onClick={() => void generate()}
           >
             {busy ? "生成中…" : "レポートを生成する"}
@@ -259,27 +259,27 @@ export default function AdminReportsPage() {
             {reports.map((r) => (
               <li
                 key={r.id}
-                className="rounded-xl bg-background px-3 py-3 space-y-2"
+                className="space-y-2.5 rounded-xl bg-background px-3 py-3"
               >
                 <p className="font-semibold">
                   {r.groupLabel}（{r.memberCount}人）
                 </p>
-                <p className="break-all text-xs text-muted">
+                <p className="break-all text-[11px] leading-relaxed text-muted sm:text-xs">
                   {typeof window !== "undefined"
                     ? `${window.location.origin}${r.sharePath}`
                     : r.sharePath}
                 </p>
-                <div className="flex flex-wrap gap-2">
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                   <button
                     type="button"
-                    className="rounded-lg border border-line px-3 py-1.5 text-xs"
+                    className="rounded-lg border border-line px-3 py-2.5 text-xs sm:py-1.5"
                     onClick={() => void copyShare(r.sharePath, r.id)}
                   >
                     {copiedId === r.id ? "コピーしました" : "URLをコピー"}
                   </button>
                   <Link
                     href={r.sharePath}
-                    className="rounded-lg border border-line px-3 py-1.5 text-xs text-mint"
+                    className="rounded-lg border border-line px-3 py-2.5 text-center text-xs text-mint sm:py-1.5"
                     target="_blank"
                   >
                     開く

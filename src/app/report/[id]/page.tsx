@@ -89,12 +89,12 @@ export default function TeamReportPage() {
   return (
     <>
       <TeamReportArtBg snapshot={report.snapshot} />
-      <main className="relative z-[1] mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-10">
+      <main className="relative z-[1] mx-auto flex w-full max-w-lg flex-1 flex-col gap-5 px-4 py-8 sm:gap-6 sm:py-10">
       <header className="space-y-2">
         <p className="text-xs font-semibold tracking-wide text-mint">
           Value Drop · チームレポート
         </p>
-        <h1 className="text-3xl font-bold">{report.groupLabel}</h1>
+        <h1 className="text-2xl font-bold sm:text-3xl">{report.groupLabel}</h1>
         <p className="text-sm text-muted">
           部屋 {report.roomCode} · {report.snapshot.memberCount}人
         </p>
