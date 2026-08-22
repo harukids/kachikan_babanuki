@@ -6,7 +6,7 @@ import { useParams } from "next/navigation";
 import { DECK, getCard, PILLAR_LABEL } from "@/lib/deck";
 import { downloadTeamReportImage } from "@/lib/team-report-image";
 import {
-  resolveMainAndSubCardIds,
+  resolveSubCardsWithOwners,
   type TeamMemberSnapshot,
   type TeamSnapshot,
 } from "@/lib/team-report";
@@ -69,7 +69,7 @@ function ValueCardTile({
       </div>
       <figcaption
         className={`mt-2 text-center font-semibold leading-snug ${
-          compact ? "text-[11px]" : "text-sm"
+          compact ? "text-[10px]" : "text-sm"
         }`}
       >
         {caption ?? card.label}
@@ -119,11 +119,8 @@ export default function TeamReportPage() {
     return Math.max(1, s.heart + s.work + s.growth);
   }, [report]);
 
-  const { subs } = useMemo(
-    () =>
-      report
-        ? resolveMainAndSubCardIds(report.snapshot)
-        : { mains: [] as string[], subs: [] as string[] },
+  const subs = useMemo(
+    () => (report ? resolveSubCardsWithOwners(report.snapshot) : []),
     [report],
   );
 
@@ -186,8 +183,13 @@ export default function TeamReportPage() {
         <section className="space-y-3">
           <h2 className="text-sm font-semibold text-accent">サブ</h2>
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-            {subs.map((sid) => (
-              <ValueCardTile key={sid} cardId={sid} compact />
+            {subs.map((s) => (
+              <ValueCardTile
+                key={s.cardId}
+                cardId={s.cardId}
+                caption={`${s.label} · ${s.owners.join("、")}`}
+                compact
+              />
             ))}
           </div>
         </section>

@@ -1,6 +1,6 @@
 import { DECK, PILLAR_LABEL } from "@/lib/deck";
 import {
-  resolveMainAndSubCardIds,
+  resolveSubCardsWithOwners,
   type TeamMemberSnapshot,
   type TeamSnapshot,
 } from "@/lib/team-report";
@@ -46,7 +46,7 @@ async function drawValueCard(
   const { x, y, w, cardId, caption, compact } = opts;
   const pad = compact ? 10 : 14;
   const artSize = w - pad * 2;
-  const captionH = compact ? (caption ? 28 : 8) : 40;
+  const captionH = compact ? (caption ? 36 : 8) : 40;
   const h = pad + artSize + captionH;
 
   ctx.fillStyle = "#12122a";
@@ -192,7 +192,7 @@ export async function downloadTeamReportImage(input: {
   if (col > 0) rowY += rowH + gap;
   y = rowY + 10;
 
-  const { subs } = resolveMainAndSubCardIds(input.snapshot);
+  const subs = resolveSubCardsWithOwners(input.snapshot);
   if (subs.length > 0) {
     ctx.fillStyle = "#ffe28a";
     ctx.font = "700 22px 'Zen Maru Gothic', 'Hiragino Sans', sans-serif";
@@ -204,15 +204,14 @@ export async function downloadTeamReportImage(input: {
     col = 0;
     rowY = y;
     rowH = 0;
-    for (const sid of subs.slice(0, 12)) {
-      const label = DECK.find((c) => c.id === sid)?.label ?? "";
+    for (const s of subs.slice(0, 12)) {
       const x = 80 + col * (subW + subGap);
       const h = await drawValueCard(ctx, {
         x,
         y: rowY,
         w: subW,
-        cardId: sid,
-        caption: label,
+        cardId: s.cardId,
+        caption: `${s.label} · ${s.owners.join("、")}`,
         compact: true,
       });
       rowH = Math.max(rowH, h);

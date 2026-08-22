@@ -32,44 +32,67 @@ export function resolveValueCardIds(snapshot: TeamSnapshot): string[] {
   return [...mains, ...subs];
 }
 
+export type SubCardWithOwner = {
+  cardId: string;
+  label: string;
+  owners: string[];
+};
+
 export function resolveMainAndSubCardIds(snapshot: TeamSnapshot): {
   mains: string[];
   subs: string[];
 } {
+  const owned = resolveSubCardsWithOwners(snapshot);
   const mains: string[] = [];
-  const subs: string[] = [];
   const seenMain = new Set<string>();
-  const seenSub = new Set<string>();
 
-  const pushMain = (id: string | null | undefined) => {
-    if (!id || seenMain.has(id)) return;
+  for (const m of snapshot.members) {
+    const id =
+      m.mainCardId ||
+      (m.mainLabel ? DECK.find((c) => c.label === m.mainLabel)?.id : null);
+    if (!id || seenMain.has(id)) continue;
     seenMain.add(id);
     mains.push(id);
-  };
-  const pushSub = (id: string | null | undefined) => {
-    if (!id || seenMain.has(id) || seenSub.has(id)) return;
-    seenSub.add(id);
-    subs.push(id);
+  }
+
+  return { mains, subs: owned.map((s) => s.cardId) };
+}
+
+/** サブカード＋持ち主（同一カードは所有者をまとめる） */
+export function resolveSubCardsWithOwners(
+  snapshot: TeamSnapshot,
+): SubCardWithOwner[] {
+  const byId = new Map<string, SubCardWithOwner>();
+  const order: string[] = [];
+
+  const push = (cardId: string, owner: string) => {
+    const card = getCard(cardId);
+    if (!card) return;
+    const existing = byId.get(cardId);
+    if (existing) {
+      if (!existing.owners.includes(owner)) existing.owners.push(owner);
+      return;
+    }
+    byId.set(cardId, {
+      cardId,
+      label: card.label,
+      owners: [owner],
+    });
+    order.push(cardId);
   };
 
   for (const m of snapshot.members) {
-    if (m.mainCardId) {
-      pushMain(m.mainCardId);
-    } else if (m.mainLabel) {
-      const hit = DECK.find((c) => c.label === m.mainLabel);
-      if (hit) pushMain(hit.id);
-    }
-
     if (m.subCardIds && m.subCardIds.length > 0) {
-      for (const sid of m.subCardIds) pushSub(sid);
+      for (const sid of m.subCardIds) push(sid, m.displayName);
     } else if (m.subLabels?.length) {
       for (const label of m.subLabels) {
         const hit = DECK.find((c) => c.label === label);
-        if (hit) pushSub(hit.id);
+        if (hit) push(hit.id, m.displayName);
       }
     }
   }
-  return { mains, subs };
+
+  return order.map((id) => byId.get(id)!);
 }
 
 /** @deprecated use resolveValueCardIds */

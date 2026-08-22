@@ -162,11 +162,16 @@ export default function ReportSamplePage() {
         </div>
 
         <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-accent">サブ（装飾寄り・小さめ）</h3>
+          <h3 className="text-sm font-semibold text-accent">サブ</h3>
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
             {SAMPLE_MEMBERS.flatMap((m) =>
               m.subIds.map((sid) => (
-                <ValueCard key={`${m.name}-${sid}`} cardId={sid} compact />
+                <ValueCard
+                  key={`${m.name}-${sid}`}
+                  cardId={sid}
+                  caption={`${getCard(sid)?.label ?? ""} · ${m.name}`}
+                  compact
+                />
               )),
             )}
           </div>
