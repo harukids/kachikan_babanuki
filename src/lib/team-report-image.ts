@@ -1,6 +1,7 @@
 import { DECK, PILLAR_LABEL, getCard } from "@/lib/deck";
 import {
   resolveSubCardsWithOwners,
+  type TeamMemberSnapshot,
   type TeamSnapshot,
 } from "@/lib/team-report";
 import { getValueCardPillarTone } from "@/lib/result-poster";
