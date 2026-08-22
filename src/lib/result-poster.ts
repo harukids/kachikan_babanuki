@@ -178,6 +178,43 @@ export function getPosterPreviewClasses(pillar: Pillar | null | undefined): {
   }
 }
 
+/** チームレポート等のカードタイル用（個人ポスターより控えめ） */
+export function getValueCardPillarTone(pillar: Pillar | null | undefined): {
+  figure: string;
+  art: string;
+  border: string;
+  artFrom: string;
+  artTo: string;
+} {
+  switch (pillar) {
+    case "work":
+      return {
+        figure: "border-sky-300/40 bg-[#101828]",
+        art: "bg-gradient-to-br from-[#1a3a8a]/50 to-[#0c1020]",
+        border: "rgba(110,168,255,0.55)",
+        artFrom: "#1a3a8a",
+        artTo: "#0c1020",
+      };
+    case "growth":
+      return {
+        figure: "border-emerald-300/40 bg-[#0e1a16]",
+        art: "bg-gradient-to-br from-[#0a4030]/55 to-[#0c1020]",
+        border: "rgba(126,240,212,0.5)",
+        artFrom: "#0a4030",
+        artTo: "#0c1020",
+      };
+    case "heart":
+    default:
+      return {
+        figure: "border-rose-300/40 bg-[#1a1018]",
+        art: "bg-gradient-to-br from-[#4a1830]/55 to-[#0c1020]",
+        border: "rgba(255,142,200,0.5)",
+        artFrom: "#4a1830",
+        artTo: "#0c1020",
+      };
+  }
+}
+
 /** 行頭禁則（改行文頭に来たら前行へぶら下げる） */
 const LINE_START_KINSOKU =
   /[、。，．！？）」』〉》〕】ぁぃぅぇぉっゃゅょゎァィゥェォッャュョヮ゛゜ー…‥･・]/;

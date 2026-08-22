@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { getCard, PILLAR_LABEL } from "@/lib/deck";
+import { getValueCardPillarTone } from "@/lib/result-poster";
 import type { Pillar } from "@/lib/types";
 
 const CACHE = "20260822i";
@@ -42,14 +43,15 @@ function ValueCard({
 }) {
   const card = getCard(cardId);
   if (!card) return null;
+  const tone = getValueCardPillarTone(card.pillar);
   return (
     <figure
-      className={`overflow-hidden rounded-2xl border border-line bg-[#12122a] ${
+      className={`overflow-hidden rounded-2xl border ${tone.figure} ${
         compact ? "p-2" : "p-3"
       }`}
     >
       <div
-        className={`flex aspect-square items-center justify-center rounded-xl bg-gradient-to-br from-[#1a2040] to-[#0c1020] ${
+        className={`flex aspect-square items-center justify-center rounded-xl ${tone.art} ${
           compact ? "p-2" : "p-4"
         }`}
       >

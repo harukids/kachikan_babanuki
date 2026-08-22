@@ -1,9 +1,10 @@
-import { DECK, PILLAR_LABEL } from "@/lib/deck";
+import { DECK, PILLAR_LABEL, getCard } from "@/lib/deck";
 import {
   resolveSubCardsWithOwners,
   type TeamMemberSnapshot,
   type TeamSnapshot,
 } from "@/lib/team-report";
+import { getValueCardPillarTone } from "@/lib/result-poster";
 import type { Pillar } from "@/lib/types";
 
 const PILLAR_COLORS: Record<Pillar, string> = {
@@ -44,15 +45,23 @@ async function drawValueCard(
   },
 ): Promise<number> {
   const { x, y, w, cardId, caption, compact } = opts;
+  const card = getCard(cardId);
+  const tone = getValueCardPillarTone(card?.pillar);
   const pad = compact ? 10 : 14;
   const artSize = w - pad * 2;
   const captionH = compact ? (caption ? 36 : 8) : 40;
   const h = pad + artSize + captionH;
 
-  ctx.fillStyle = "#12122a";
+  const fill =
+    card?.pillar === "work"
+      ? "#101828"
+      : card?.pillar === "growth"
+        ? "#0e1a16"
+        : "#1a1018";
+  ctx.fillStyle = fill;
   roundRect(ctx, x, y, w, h, 18);
   ctx.fill();
-  ctx.strokeStyle = "rgba(244,247,255,0.16)";
+  ctx.strokeStyle = tone.border;
   ctx.lineWidth = 2;
   roundRect(ctx, x, y, w, h, 18);
   ctx.stroke();
@@ -65,8 +74,8 @@ async function drawValueCard(
     innerX + artSize,
     innerY + artSize,
   );
-  grad.addColorStop(0, "#1a2040");
-  grad.addColorStop(1, "#0c1020");
+  grad.addColorStop(0, tone.artFrom);
+  grad.addColorStop(1, tone.artTo);
   ctx.fillStyle = grad;
   roundRect(ctx, innerX, innerY, artSize, artSize, 14);
   ctx.fill();
