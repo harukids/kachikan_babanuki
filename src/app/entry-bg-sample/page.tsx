@@ -84,7 +84,9 @@ export default function EntryBgSamplePage() {
         </p>
         <h1 className="text-2xl font-bold">入場背景ウォールペーパー</h1>
         <p className="text-sm leading-relaxed text-muted">
-          全5案です。上で一覧、下で縦／横の詳細。実機は各リンクのトップURLで。
+          全5案の比較です。本番トップ／ロビーは
+          <span className="text-mint"> 散らし・超高密度 </span>
+          で確定しています。
         </p>
 
         <nav className="flex flex-wrap gap-2 text-sm">

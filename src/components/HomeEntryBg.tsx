@@ -13,7 +13,7 @@ function isPattern(v: string | null): v is WallpaperPatternId {
 
 /** `/?bg=monogram` などで入場背景を切替（実機見比べ用） */
 export function HomeEntryBg({
-  defaultPattern = "scatterDense",
+  defaultPattern = "scatterUltra",
 }: {
   defaultPattern?: WallpaperPatternId;
 }) {

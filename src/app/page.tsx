@@ -85,7 +85,7 @@ export default function HomePage() {
 
   return (
     <>
-      <Suspense fallback={<LineArtCoverBg pattern="scatterDense" />}>
+      <Suspense fallback={<LineArtCoverBg pattern="scatterUltra" />}>
         <HomeEntryBg />
       </Suspense>
       <main className="relative z-[1] mx-auto flex w-full max-w-lg flex-1 flex-col justify-center gap-8 px-4 py-12">
